@@ -1,0 +1,1 @@
+pscp switch-publisher.py pi@192.168.2.2:source/switch-publisher.py 
