@@ -1,6 +1,7 @@
 # subscriber.py
 import paho.mqtt.client as mqtt
 import RPi.GPIO as GPIO
+import threading
 
 # define the MQTT broker to use
 
@@ -60,7 +61,44 @@ light_map = [
     [OFF, OFF, ON , OFF, OFF, OFF, ON ]  # T_FLSH 'topic/lights/flasher'
 ]
 
-state = [0,0,0,0,0,0,0]
+state = [OFF,OFF,OFF,OFF,OFF,OFF,OFF]
+
+lind_timer = None
+lind_duty  = OFF
+rind_timer = None
+rind_duty  = OFF
+
+def on_lind_expire():
+    if state[LIND] == ON:
+        if lind_duty == ON:
+            GPIO.output(pin_map[LIND], GPIO.LOW)
+            lind_duty = OFF
+        else:
+            GPIO.output(pin_map[LIND], GPIO.HIGH)
+            lind_duty = ON
+        lind_timer = threading.Timer(0.75, on_lind_expire)
+        lind_timer.start() 
+    else:
+        GPIO.output(pin_map[LIND], GPIO.HIGH)
+        state[LIND] = OFF
+        lind_timer = None
+        lind_duty = OFF
+
+def on_rind_expire():
+    if state[RIND] == ON:
+        if rind_duty == ON:
+            GPIO.output(pin_map[RIND], GPIO.LOW)
+            rind_duty = OFF
+        else:
+            GPIO.output(pin_map[RIND], GPIO.HIGH)
+            rind_duty = ON
+        rind_timer = threading.Timer(0.75, on_rind_expire)
+        rind_timer.start() 
+    else:
+        GPIO.output(pin_map[RIND], GPIO.HIGH)
+        state[RIND] = OFF
+        rind_timer = None
+        rind_duty = OFF
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
@@ -84,10 +122,7 @@ def on_message(client, userdata, msg):
     except:
         print("some other erro rhappened with topic_map.index")
     else:
-        print(light_map[topic_index])
-    
         for light_index in range(len(light_map[topic_index])):
-            print ("light set to ", light_map[topic_index][light_index])
             if light_map[topic_index][light_index] == ON:
                 if msg.payload == b'1': # turn on
                     print ("turn on light ", pin_map[light_index])
@@ -98,14 +133,50 @@ def on_message(client, userdata, msg):
                     GPIO.output(pin_map[light_index], GPIO.HIGH)
                     state[light_index]= OFF
 
+            if light_map[topic_index][light_index] == OFF: # shouldn't happen but JIC
+                if state[light_index] != ON: # only turn off if not on by controler switch
+                    GPIO.output(pin_map[light_index], GPIO.HIGH)
+
             if light_map[topic_index][light_index] == ASC:
                 if msg.payload == b'1': # turn on
                     print ("turn on light ", pin_map[light_index])
                     GPIO.output(pin_map[light_index], GPIO.LOW)
                 else: # turn off
-                    print ("turn off light if not state on ", pin_map[light_index])
                     if state[light_index] == OFF: # only turn off if not on by controler switch
+                        print ("turn off light as not state on ", pin_map[light_index])
                         GPIO.output(pin_map[light_index], GPIO.HIGH)
+
+            if light_map[topic_index][light_index] == TMR:
+                if msg.payload == b'1': # turn on
+                    print ("turn on light ", pin_map[light_index])
+                    GPIO.output(pin_map[light_index], GPIO.LOW)
+                    if light_index == LIND:
+                        lind_timer = threading.Timer(0.75, on_lind_expire)
+                        lind_timer.start() 
+                        state[light_index] = ON
+                        lind_duty = ON
+                    elif light_index == RIND:
+                        rind_timer = threading.Timer(0.75, on_rind_expire)
+                        rind_timer.start() 
+                        state[light_index] = ON
+                        rind_duty = ON
+                    else:
+                        print("Error: TMR set butnot for an indicator")
+                else: # turn off
+                    print ("turn off light ", pin_map[light_index])
+                    GPIO.output(pin_map[light_index], GPIO.HIGH)
+                    if light_index == LIND:
+                        lind_timer.cancel()
+                        lind_timer = None
+                        state[light_index] = OFF
+                        lind_duty = OFF
+                    elif light_index == RIND:
+                        rind_timer.cancel() 
+                        rind_timer = None
+                        state[light_index] = OFF
+                        rind_duty = OFF
+                    else:
+                        print("Error: TMR set butnot for an indicator")
 
 
 

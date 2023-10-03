@@ -1,6 +1,5 @@
 import paho.mqtt.client as mqtt
 import RPi.GPIO as GPIO
-import time
 import threading
 
 # define the MQTT broker to use
