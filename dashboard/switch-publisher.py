@@ -1,160 +1,76 @@
 import paho.mqtt.client as mqtt
 import RPi.GPIO as GPIO
+import time
+import threading
 
 # define the MQTT broker to use
 
-broker = "dashboard.hhw470d.local"
+#broker = "dashboard.hhw470d.local"
+broker = "192.168.2.2"
 myport = 1883
 
 # pin allocation 
+# this is driving the 16 channel analogue multiplexer.
 
-headdip = 11
-headfull = 12
-leftind = 13
-rightind = 15
-side = 16
-spot = 18
-ffog = 22
-rfog = 7
-# wiper need more GPIO pins!
-# wash need more GPIO pins!
+en = 11 # 0 for enable, 1 for disable
+s0 = 12 # msb
+s1 = 13
+s2 = 15 
+s3 = 16 # lsb
+sg = 18 # the value of the switch
 
-# state variables for the switches
+# set up the mulitplexer bit table
 
-headdip_State = 0
-headfull_state = 0
-leftind_state = 0
-rightind_state = 0
-side_state = 0
-spot_state = 0
-ffog_state = 0
-rfog_state = 0
+multiplexer = [
+    [GPIO.LOW,GPIO.LOW,GPIO.LOW,GPIO.LOW],     # sidelights front and back
+    [GPIO.LOW,GPIO.LOW,GPIO.LOW,GPIO.HIGH],    # headlights dipped 
+    [GPIO.LOW,GPIO.LOW,GPIO.HIGH,GPIO.LOW],    # headlights full
+    [GPIO.LOW,GPIO.LOW,GPIO.HIGH,GPIO.HIGH],   # left indicator front and back
+    [GPIO.LOW,GPIO.HIGH,GPIO.LOW,GPIO.LOW],    # right indicator front and back
+    [GPIO.LOW,GPIO.HIGH,GPIO.LOW,GPIO.HIGH],   # hazard indicators front and back
+    [GPIO.LOW,GPIO.HIGH,GPIO.HIGH,GPIO.LOW],   # brake lights
+    [GPIO.LOW,GPIO.HIGH,GPIO.HIGH,GPIO.HIGH],  # front fog light
+    [GPIO.HIGH,GPIO.LOW,GPIO.LOW,GPIO.LOW],    # rear fog light
+    [GPIO.HIGH,GPIO.LOW,GPIO.LOW,GPIO.HIGH],   # front spot light
+    [GPIO.HIGH,GPIO.LOW,GPIO.HIGH,GPIO.LOW],   # reversing light
+    [GPIO.HIGH,GPIO.LOW,GPIO.HIGH,GPIO.HIGH],  # flasher (instantaneous full and spot)
+    [GPIO.HIGH,GPIO.HIGH,GPIO.LOW,GPIO.LOW],   # windscreen washers
+    [GPIO.HIGH,GPIO.HIGH,GPIO.LOW,GPIO.HIGH],  # windscreen wipers
+    [GPIO.HIGH,GPIO.HIGH,GPIO.HIGH,GPIO.LOW],  # blower
+    [GPIO.HIGH,GPIO.HIGH,GPIO.HIGH,GPIO.HIGH], # spare
+]
 
-#
-# callback for a headlight dipped switch change
-#
-def my_callback_headdip(channel):
-    global headdip_state
-    if GPIO.input(channel) == GPIO.HIGH and headdip_state == 0:
-        client.publish('topic/lights/front/headdip/on', payload='on', qos=0, retain=False)
-        headdip_state = 1
-        print('--> dipped headlights on')
+# state variable for the switches
 
-    elif GPIO.input(channel) == GPIO.LOW and headdip_state == 1:
-        client.publish('topic/lights/front/headdip/off', payload='off', qos=0, retain=False)
-        headdip_state = 0
-        print('--> dipped headlights off')
- 
-#
-# callback for a headlight full switch change
-#
-def my_callback_headfull(channel):
-    global headfull_state
-    if GPIO.input(channel) == GPIO.HIGH and headfull_state == 0:
-        client.publish('topic/lights/front/headfull/on', payload='on', qos=0, retain=False)
-        headfull_state = 1
-        print('--> full headlights on')
+state = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
-    elif GPIO.input(channel) == GPIO.LOW and headfull_state == 1:
-        client.publish('topic/lights/front/headfull/off', payload='off', qos=0, retain=False)
-        headfull_state = 0
-        print('--> full headlights off')
+# the set of events that can be published
 
-#
-# callback for a sideight switch change
-#
-def my_callback_side(channel):
-    global side_state
-    if GPIO.input(channel) == GPIO.HIGH and side_state == 0:
-        client.publish('topic/lights/front/side/on', payload='on', qos=0, retain=False)
-        client.publish('topic/lights/rear/side/on', payload='on', qos=0, retain=False)
-        side_state = 1
-        print('--> sidelights on')
-
-    elif GPIO.input(channel) == GPIO.LOW and side_state == 1:
-        client.publish('topic/lights/front/side/off', payload='off', qos=0, retain=False)
-        client.publish('topic/lights/rear/side/off', payload='off', qos=0, retain=False)
-        side_state = 0
-        print('--> sidelights off')
+events = [
+    'topic/lights/side',
+    'topic/lights/head-dipped',
+    'topic/lights/head-full',
+    'topic/lights/flasher',
+    'topic/light/left-indicator',
+    'topic/lights/right-indicator',
+    'topic/lights/hazards',
+    'topic/lights/brakes',
+    'topic/lights/front-fog',
+    'topic/lights/rear-fog',
+    'topic/lights/spot',
+    'topic/lights/reversing',
+    'topic/windscreen/washer',
+    'topic/windscreen/wiper',
+    'topic/heating/blower',
+    'topic/spare'
+]
 
 #
-# callback for a left indicator switch change
+# callback for a publishing a switch state change
 #
-def my_callback_leftind(channel):
-    global leftind_state
-    if GPIO.input(channel) == GPIO.HIGH and leftind_state == 0:
-        client.publish('topic/lights/front/leftind/on', payload='on', qos=0, retain=False)
-        client.publish('topic/lights/rear/leftind/on', payload='on', qos=0, retain=False)
-        leftind_state = 1
-        print('--> left indicator on')
-
-    elif GPIO.input(channel) == GPIO.LOW and leftind_state == 1:
-        client.publish('topic/lights/front/leftind/off', payload='off', qos=0, retain=False)
-        client.publish('topic/lights/rear/leftind/off', payload='off', qos=0, retain=False)
-        leftind_state = 0
-        print('--> left indicator off')
-
-#
-# callback for a right indicator switch change
-#
-def my_callback_rightind(channel):
-    global rightind_state
-    if GPIO.input(channel) == GPIO.HIGH and rightind_state == 0:
-        client.publish('topic/lights/front/rightind/on', payload='on', qos=0, retain=False)
-        client.publish('topic/lights/rear/rightind/on', payload='on', qos=0, retain=False)
-        rightind_state = 1
-        print('--> right indicator on')
-
-    elif GPIO.input(channel) == GPIO.LOW and rightind_state == 1:
-        client.publish('topic/lights/front/rightind/off', payload='off', qos=0, retain=False)
-        client.publish('topic/lights/rear/rightind/off', payload='off', qos=0, retain=False)
-        rightind_state = 0
-        print('--> right indicator off')
-
-#
-# callback for a spotlight switch change
-#
-def my_callback_spot(channel):
-    global spot_state
-    if GPIO.input(channel) == GPIO.HIGH and spot_state == 0:
-        client.publish('topic/lights/front/spot/on', payload='on', qos=0, retain=False)
-        spot_state = 1
-        print('--> spot on')
-
-    elif GPIO.input(channel) == GPIO.LOW and spot_state == 1:
-        client.publish('topic/lights/front/spot/off', payload='off', qos=0, retain=False)
-        spot_state = 0
-        print('--> spot off')
- 
-#
-# callback for a front fog lights switch change
-#
-def my_callback_ffog(channel):
-    global ffog_state
-    if GPIO.input(channel) == GPIO.HIGH and ffog_state == 0:
-        client.publish('topic/lights/front/fog/on', payload='on', qos=0, retain=False)
-        ffog_state = 1
-        print('--> front fog on')
-
-    elif GPIO.input(channel) == GPIO.LOW and ffog_state == 1:
-        client.publish('topic/lights/front/fog/off', payload='off', qos=0, retain=False)
-        ffog_state = 0
-        print('--> front fog off')
-
-#
-# callback for a rear fog light switch change
-#
-def my_callback_rfog(channel):
-    global rfog_state
-    if GPIO.input(channel) == GPIO.HIGH and rfog_state == 0:
-        client.publish('topic/lights/rear/fog/on', payload='on', qos=0, retain=False)
-        rfog_state = 1
-        print('--> rearfog on')
-
-    elif GPIO.input(channel) == GPIO.LOW and rfog_state == 1:
-        client.publish('topic/lights/rear/fog/off', payload='off', qos=0, retain=False)
-        rfog_state = 0
-        print('--> rearfog off')
+def publish_event(channel, value):
+        client.publish(events[channel], payload=value, qos=0, retain=False)
+        print('--> ', events[channel], " ", value)
 
 #
 # callback for the connect to the MQTT broker
@@ -162,40 +78,70 @@ def my_callback_rfog(channel):
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
 
+#
+# The MQTT on_message callback function, it will be triggered when receiving messages
+# GPIO.HIGH is light on
+#
+def on_message(client, userdata, msg):
+    print(f"{msg.topic} {msg.payload}")
+
+#
+# the callback at the end of the timer that implements the switch check
+#
+def on_switch_check_expire():
+    channel = 0
+    while channel < 16:
+        GPIO.output(en, GPIO.HIGH)
+        GPIO.output(s0, multiplexer[channel][3])
+        GPIO.output(s1, multiplexer[channel][2])
+        GPIO.output(s2, multiplexer[channel][1])
+        GPIO.output(s3, multiplexer[channel][0])
+        GPIO.output(en, GPIO.LOW)
+        value = GPIO.input(sg)
+
+        if state[channel] != value:
+            publish_event(channel, value)
+            state[channel] = value
+
+        channel += 1 
+    timer = threading.Timer(0.5, on_switch_check_expire)
+    timer.start() 
+
 # connect to the broker
 
 client = mqtt.Client()
 client.on_connect = on_connect
+client.on_message = on_message
+
+# Set the will message, when the Raspberry Pi is powered off, or 
+# the network is interrupted abnormally, it will send the will message t
+# o other clients
+client.will_set('raspberry/front/status', b'{"status": "Off"}')
+
+# Create connection, the three parameters are broker address, 
+# broker port number, and keep-alive time respectively
 client.connect(broker, myport, 60)
 
-# set up the pins to listen to changes
+# set up the pins to drive the multiplexer
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(headdip, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(headfull, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(side, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(leftind, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(rightind, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(spot, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(ffog, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(rfog, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.remove_event_detect(headdip)
-GPIO.remove_event_detect(headfull)
-GPIO.remove_event_detect(side)
-GPIO.remove_event_detect(leftind)
-GPIO.remove_event_detect(rightind)
-GPIO.remove_event_detect(spot)
-GPIO.remove_event_detect(ffog)
-GPIO.remove_event_detect(rfog)
-GPIO.add_event_detect(headdip, GPIO.BOTH, callback=my_callback_headdip)
-GPIO.add_event_detect(headfull, GPIO.BOTH, callback=my_callback_headfull)
-GPIO.add_event_detect(side, GPIO.BOTH, callback=my_callback_side)
-GPIO.add_event_detect(leftind, GPIO.BOTH, callback=my_callback_leftind)
-GPIO.add_event_detect(rightind, GPIO.BOTH, callback=my_callback_rightind)
-GPIO.add_event_detect(spot, GPIO.BOTH, callback=my_callback_spot)
-GPIO.add_event_detect(ffog, GPIO.BOTH, callback=my_callback_ffog)
-GPIO.add_event_detect(rfog, GPIO.BOTH, callback=my_callback_rfog)
+GPIO.setup(en, GPIO.OUT)
+GPIO.setup(s0, GPIO.OUT)
+GPIO.setup(s1, GPIO.OUT)
+GPIO.setup(s2, GPIO.OUT)
+GPIO.setup(s3, GPIO.OUT)
+GPIO.setup(sg, GPIO.IN,  pull_up_down=GPIO.PUD_DOWN)
+GPIO.remove_event_detect(en)
+GPIO.remove_event_detect(s0)
+GPIO.remove_event_detect(s1)
+GPIO.remove_event_detect(s2)
+GPIO.remove_event_detect(s3)
+GPIO.remove_event_detect(sg)
+
+
+timer = threading.Timer(0.5, on_switch_check_expire)
+timer.start() 
 
 # Set the network loop blocking, it will not actively end the program before calling disconnect() or the program crash
 
@@ -205,8 +151,8 @@ try:
 except KeyboardInterrupt:
     print ("programme interupted")
 
-except:
-    print ("some other interrpt")
+except Exception as error:
+    print ("some other interrpt - ", type(error).__name__, "–", error)
 
 finally:
     GPIO.cleanup()
