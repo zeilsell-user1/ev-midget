@@ -92,9 +92,24 @@ def on_message(client, userdata, msg):
                 if msg.payload == b'1': # turn on
                     print ("turn on light ", pin_map[light_index])
                     GPIO.output(pin_map[light_index], GPIO.LOW)
+                    state[light_index] = ON
                 else: # turn off
                     print ("turn off light ", pin_map[light_index])
                     GPIO.output(pin_map[light_index], GPIO.HIGH)
+                    state[light_index]= OFF
+
+            if light_map[topic_index][light_index] == ASC:
+                if msg.payload == b'1': # turn on
+                    print ("turn on light ", pin_map[light_index])
+                    GPIO.output(pin_map[light_index], GPIO.LOW)
+                else: # turn off
+                    print ("turn off light if not state on ", pin_map[light_index])
+                    if state[light_index] == OFF: # only turn off if not on by controler switch
+                        GPIO.output(pin_map[light_index], GPIO.HIGH)
+
+
+
+
         
 
 GPIO.setwarnings(False)
