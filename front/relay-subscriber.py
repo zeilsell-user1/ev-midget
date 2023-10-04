@@ -69,6 +69,7 @@ rind_timer = None
 rind_duty  = OFF
 
 def on_lind_expire():
+    global lind_duty, lind_timer
     if state[LIND] == ON:
         if lind_duty == ON:
             GPIO.output(pin_map[LIND], GPIO.LOW)
@@ -85,6 +86,7 @@ def on_lind_expire():
         lind_duty = OFF
 
 def on_rind_expire():
+    global rind_duty, rind_timer
     if state[RIND] == ON:
         if rind_duty == ON:
             GPIO.output(pin_map[RIND], GPIO.LOW)
@@ -166,17 +168,11 @@ def on_message(client, userdata, msg):
                     print ("turn off light ", pin_map[light_index])
                     GPIO.output(pin_map[light_index], GPIO.HIGH)
                     if light_index == LIND:
-                        lind_timer.cancel()
-                        lind_timer = None
                         state[light_index] = OFF
-                        lind_duty = OFF
                     elif light_index == RIND:
-                        rind_timer.cancel() 
-                        rind_timer = None
                         state[light_index] = OFF
-                        rind_duty = OFF
                     else:
-                        print("Error: TMR set butnot for an indicator")
+                        print("Error: TMR set but not for an indicator")
 
 
 
