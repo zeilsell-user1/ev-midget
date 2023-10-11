@@ -5,7 +5,7 @@
 const char *ssid = "hhw470d";
 const char *password = "Target21#";
 
-IPAddress local_IP(192,168,3,0);
+IPAddress local_IP(192,168,3,1);
 IPAddress gateway(192,168,3,1);
 IPAddress subnet(255,255,255,0);
 
