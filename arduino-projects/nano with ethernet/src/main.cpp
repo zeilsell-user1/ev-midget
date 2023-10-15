@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include <Ethernet.h>
+#include <EthernetENC.h>
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-byte ip[] = { 192, 168, 2, 12 };
-byte gateway[] = { 192, 168, 2, 2 }; 
-byte subnet[] = { 255, 255, 255, 0 };
+IPAddress localIp (192,168,2,12);
+IPAddress localDns(192,168,2,2);
+IPAddress localGw (192,168,2,1);
 
 EthernetServer server(80);
 String readString; 
@@ -14,10 +14,17 @@ int ledPin = 2;
 
 void setup() 
 { 
+  Serial.begin(115200);
+  delay(10);
   pinMode(ledPin, OUTPUT); 
-  printf("start ethernet");
-  Ethernet.begin(mac, ip, gateway, subnet); 
-  printf("start server");
+
+  Serial.println("start ethernet");
+  Ethernet.begin(mac, localIp, localDns, localGw);
+  delay(10);
+  Serial.println(Ethernet.localIP());
+  Serial.println(Ethernet.dnsServerIP());
+  Serial.println(Ethernet.gatewayIP());
+  Serial.println("start server");
   server.begin(); 
 }
 
