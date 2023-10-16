@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
@@ -17,7 +18,8 @@ IPAddress subnet(255, 255, 0, 0);
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
 WiFiServer server(80);
-
+#define HTTP_REST_PORT 8080
+ESP8266WebServer httpRestServer(HTTP_REST_PORT);
 uint32_t delayMS;
 
 double Fahrenheit(double celsius) {
@@ -26,6 +28,18 @@ return ((double)(9 / 5) * celsius) + 32;
 
 double Kelvin(double celsius) {
 return celsius + 273.15;
+}
+
+void getHelloWord() {
+    httpRestServer.send(200, "text/json", "{\"name\": \"Hello world\"}");
+}
+ 
+void restServerRouting() {
+    httpRestServer.on("/", HTTP_GET, []() {
+        httpRestServer.send(200, F("text/html"),
+            F("Welcome to the REST Web Server"));
+    });
+    httpRestServer.on(F("/helloWorld"), HTTP_GET, getHelloWord);
 }
 
 void setup() {
@@ -60,6 +74,10 @@ void setup() {
   // Start the server
   server.begin();
   Serial.println("Server started");
+
+  // and the API web server
+  restServerRouting();
+  httpRestServer.begin();
 
   // Print temperature sensor details.
   sensor_t sensor;
@@ -117,6 +135,8 @@ void loop() {
     Serial.print(humi);
     Serial.println(F("%"));
   }
+
+  httpRestServer.handleClient();
 
   WiFiClient client = server.accept();
   client.println("HTTP/1.1 200 OK");
