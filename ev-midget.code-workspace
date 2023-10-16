@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "humidity and tempurature",
+			"path": "esp01-projects/humidity and tempurature"
+		},
+		{
+			"name": "wifi-hotspot",
+			"path": "esp01-projects/wifi-hotspot"
+		},
+		{
+			"name": "mqtt broker",
+			"path": "esp01-projects/mqtt broker"
+		},
+		{
+			"name": "blink led",
+			"path": "arduino-projects/blink led"
+		},
+		{
+			"name": "nano with ethernet",
+			"path": "arduino-projects/nano with ethernet"
+		}
+	],
+	"settings": {}
+}
