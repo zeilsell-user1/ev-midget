@@ -3,7 +3,7 @@
 #include <EthernetENC.h>
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-IPAddress localIp (192,168,2,12);
+IPAddress localIp (192,168,2,20);
 IPAddress localDns(192,168,2,2);
 IPAddress localGw (192,168,2,1);
 

@@ -40,8 +40,8 @@ LOCAL MqttAuthCallback local_auth_cb = NULL;
 
 MQTT_ClientCon dummy_clientcon;
 
-//#undef MQTT_INFO
-//#define MQTT_INFO os_printf
+#undef MQTT_INFO
+#define MQTT_INFO os_printf
 #define MQTT_WARNING os_printf
 #define MQTT_ERROR os_printf
 
@@ -622,6 +622,7 @@ static void ICACHE_FLASH_ATTR MQTT_ClientCon_recv_cb(void *arg, char *pdata, uns
 	    MQTT_server_disconnectClientCon(clientcon);
 	    return;
 	}
+	MQTT_INFO("send CONNACK");
 	clientcon->mqtt_state.outbound_message = mqtt_msg_connack(&clientcon->mqtt_state.mqtt_connection, msg_conn_ret);
 	if (QUEUE_Puts
 	    (&clientcon->msgQueue, clientcon->mqtt_state.outbound_message->data,

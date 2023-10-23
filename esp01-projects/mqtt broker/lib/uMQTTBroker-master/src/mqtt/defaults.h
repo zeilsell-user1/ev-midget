@@ -18,7 +18,7 @@
 #endif
 
 #ifndef MQTT_KEEPALIVE
-#define MQTT_KEEPALIVE    120  /*seconds*/
+#define MQTT_KEEPALIVE    30  /*seconds*/
 #endif
 
 #ifndef MQTT_RECONNECT_TIMEOUT

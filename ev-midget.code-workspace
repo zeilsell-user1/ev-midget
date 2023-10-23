@@ -22,7 +22,19 @@
 		{
 			"name": "nano with ethernet",
 			"path": "arduino-projects/nano with ethernet"
+		},
+		{
+			"name": "switch-sensor",
+			"path": "arduino-projects/switch-sensor"
+		},
+		{
+			"name": "DNS server",
+			"path": "esp01-projects/DNS server"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"mqtt_server.h": "c"
+		}
+	}
 }
