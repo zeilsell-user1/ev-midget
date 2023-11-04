@@ -41,7 +41,7 @@
 
 extern "C" {
 	#include <stddef.h>
-	#include "mqtt/mqtt.h"
+	#include "mqtt_c.h"
 }
 
 
