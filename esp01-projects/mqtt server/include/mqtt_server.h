@@ -1,8 +1,7 @@
 #ifndef _MQTT_SERVER_H_
 #define _MQTT_SERVER_H_
 
-#include "user_interface.h"
-#include "mqtt/mqtt_topics.h"
+#include "mqtt_server_topic.h"
 
 class MqttServer
 {
@@ -11,10 +10,10 @@ class MqttServer
     // bool MqttServer::publish_topic(topic_entry *topic_e, uint8_t *topic, uint8_t *data, uint16_t data_len) const;
 
 public:
-    typedef bool (*MqttConnectCallback)(struct espconn *pesp_conn, uint16_t client_count);
+    typedef bool (*MqttConnectCallback)(struct espconn *pesp_conn, unsigned short client_count);
     typedef bool (*MqttDisconnectCallback)(struct espconn *pesp_conn, const char *client_id);
 
-    MqttServer(uint16_t portno);
+    MqttServer(unsigned short portno);
     
     void TcpConnectedCb(void *arg);
     void TcpReceiveCb(void *arg, char *pdata, unsigned short len);

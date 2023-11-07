@@ -1,0 +1,26 @@
+{
+    "name": "mqtt server",
+    "version": "1.0.0",
+    "description": "A \"MQTT Server\" with a memory and performance deterministic structure",
+    "keywords": "MQTT, SubPub, Deterministic",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com//rmqttserver.git"
+    },
+    "authors":
+    [
+      {
+        "name": "Richard George",
+        "email": "richard.john.george.3@gmail.com",
+        "url": "https://www.linkedin.com/in/richardjohngeorge"
+      }
+    ],
+    "license": "MIT",
+    "homepage": "https://www.georgeconsultants.com/",
+    "dependencies": {
+      
+    },
+    "frameworks": "*",
+    "platforms": "*"
+  }

@@ -1,5 +1,6 @@
-# uMQTTBroker
-MQTT Broker library for ESP8266 Arduino
+# rMQTTBroker
+
+Memory Deterministic MQTT Broker library for ESP8266 Arduino
 
 You can start an MQTT broker in any ESP Arduino project. Just clone (or download the zip-file and extract it) into the libraries directory of your Arduino ESP8266 installation.
 
@@ -10,14 +11,16 @@ lwip 2.0 has some strange behaviour that causes the socket to block after 5 conn
 Thanks to Tuan PM for sharing his MQTT client library https://github.com/tuanpmt/esp_mqtt as a basis with us. The modified code still contains the complete client functionality from the original esp_mqtt lib, but it has been extended by the basic broker service.
 
 The broker does support:
+
 - MQTT protocoll versions v3.1 and v3.1.1 simultaniously
 - a smaller number of clients (at least 8 have been tested, memory is the issue)
 - retained messages
 - LWT
 - QoS level 0
 - username/password authentication
- 
+
 The broker does not yet support:
+
 - QoS levels other than 0
 - many TCP(=MQTT) clients
 - non-clear sessions
@@ -26,7 +29,9 @@ The broker does not yet support:
 If you are searching for a complete ready-to-run MQTT broker for the ESP8266 with additional features (persistent configuration, scripting support and much more) have a look at https://github.com/martin-ger/esp_mqtt .
 
 ## API MQTT Broker (C++-style)
+
 The MQTT broker has a new C++ style API with a broker class:
+
 ```c
 class uMQTTBroker
 {
@@ -60,18 +65,23 @@ public:
     void cleanupClientConnections();
 };
 ```
+
 Use the broker as shown in oo-examples found in https://github.com/martin-ger/uMQTTBroker/tree/master/examples .
 
 ## API MQTT Broker (C-style)
+
 The MQTT broker is started by simply including:
 
 ```c
 #include "uMQTTBroker.h"
 ```
+
 and then calling
+
 ```c
 bool MQTT_server_start(uint16_t portno, uint16_t max_subscriptions, uint16_t max_retained_topics);
 ```
+
 in the "setup()" function. Now it is ready for MQTT connections on all activated interfaces (STA and/or AP). The MQTT server will run in the background and you can connect with any MQTT client. Your Arduino project might do other application logic in its loop.
 
 Your code can locally interact with the broker using these functions:
@@ -110,12 +120,15 @@ The *MqttConnectCallback* function does a similar check for the connection, but 
 The *MqttDisconnectCallback* is called each time a client disconnects from the server.
 
 If you want to force a cleanup when the broker as a WiFi client (WIFI_STA mode) has lost connectivity to the AP, call:
+
 ```c
 void MQTT_server_cleanupClientCons();
 ```
+
 This will remove all broken connections, publishing LWT if defined.
 
 Sample: in the Arduino setup() initialize the WiFi connection (client or SoftAP, whatever you need) and somewhere at the end add these line:
+
 ```c
 MQTT_server_start(1883, 30, 30);
 ```
@@ -133,6 +146,7 @@ To use the MQTT client functionality include:
 This code is taken from Ingo Randolf from esp-mqtt-arduino (https://github.com/i-n-g-o/esp-mqtt-arduino). It is a wrapper to tuanpmt's esp_mqtt client library. Look here https://github.com/i-n-g-o/esp-mqtt-arduino/tree/master/examples for code samples.
 
 # Thanks
+
 - tuanpmt for esp_mqtt (https://github.com/tuanpmt/esp_mqtt )
 - Ingo Randolf for esp-mqtt-arduino (https://github.com/i-n-g-o/esp-mqtt-arduino)
 - Ian Craggs for mqtt_topic

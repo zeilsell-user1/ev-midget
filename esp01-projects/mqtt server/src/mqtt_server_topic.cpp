@@ -1,49 +1,40 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2013 IBM Corp.
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v1.0 which accompany this distribution.
- *
- * The Eclipse Public License is available at
- *    http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at
- *   http://www.eclipse.org/org/documents/edl-v10.php.
- *
- * Contributors:
- *    Ian Craggs - initial API and implementation and/or initial documentation
+ * Copyright (c) 2023 George Consultant Ltd.
+ * richard.john.george.3@gmail.com
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the “Software”), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+ * THE SOFTWARE.
  *******************************************************************************/
 
-/*******************************************************************************
- * Based off the C library covered by the attributation and library above
- * Rewritten by Richard George (richard.john.george.3@gmail.com)
- * Converted to C++ with proper OOP structure
- *******************************************************************************/
-
-/**
- * @file
- * Topic handling functions.
- *
- * Topic syntax matches that of other MQTT servers such as Micro broker.
- */
-
+#include <string.h>
+#include "defaults.h"
 #include "mqtt_server_topic.h"
-
-#include "os_type.h"
-#include "osapi.h"
-#include "mem.h"
-#include "string.h"
 
 MqttServerTopic::MqttServerTopic()
 {
 	resetTopic();
 }
 
-MqttServerTopic::MqttServerTopic(char *topic)
+MqttServerTopic::MqttServerTopic(char const *topic)
 {
-	int length = strnlen(topic, MAX_TOPIC_LENGTH);
+	this->length = strnlen(topic, MAX_TOPIC_LENGTH);
 
-	if ((length == 0) || (length == MAX_TOPIC_LENGTH))
+	if ((this->length != 0) && (this->length != MAX_TOPIC_LENGTH))
 	{
 		strcpy(this->topic, topic);
 
@@ -63,11 +54,11 @@ MqttServerTopic::MqttServerTopic(char *topic)
  * @return returns false if there is a proboem with the topic string
  */
 
-bool MqttServerTopic::setTopic(char *topic)
+bool MqttServerTopic::setTopic(char const *topic)
 {
 	this->length = strnlen(topic, MAX_TOPIC_LENGTH);
 
-	if ((this->length == 0) || (this->length == MAX_TOPIC_LENGTH))
+	if ((this->length != 0) && (this->length != MAX_TOPIC_LENGTH))
 	{
 		strcpy(this->topic, topic);
 
@@ -96,6 +87,15 @@ void MqttServerTopic::resetTopic()
 }
 
 /**
+ * @brief get the length of the topic
+ */
+
+unsigned char MqttServerTopic::getLength()
+{
+	return this->length;
+}
+
+/**
  * Checks that the syntax of a topic string is correct.
  * @return boolean value indicating whether the topic name is valid
  */
@@ -118,28 +118,67 @@ bool MqttServerTopic::isValidName() const
 	//
 	// A topic can start with a '$' 
 
-    if (*this->topic == '/')
+    if (*(this->topic) == '\0')
 	{
+		MQTT_ERROR("empty string");
 		return false;
 	}
-
-	char *hashpos = strchr(this->topic, '#'); 
-
-	if ((hashpos != NULL) && (hashpos != this->topic + this->length - 1) && (*(hashpos - 1) != '/'))
-	{
-		return false;
-	}
-
-	char *pluspos;
 	
-	while (pluspos = strchr(this->topic, '+'))
+    if (*(this->topic) == '$')
+	{
+		return true;
+	}
+	
+    if (*(this->topic) == '#')
+	{
+		if (*(this->topic + 1) == '\0')
+		{
+			return true; // only character
+		}
+		else
+		{
+			return false; // no following characters allowed
+		}
+	}
+	
+    if (*(this->topic + this->length - 1) == '#') // minus the '\0'
+	{
+		if (*(this->topic + this->length - 2) == '/') // minus the '#' and '\0'
+		{
+			return true; // last character is # and preceeded by a /
+		}
+		else
+		{
+			return false; // something other than / before the #
+		}
+	}
+	
+    if (*(this->topic) == '/')
+	{
+		MQTT_ERROR("topic started with a '/'");
+		return false;
+	}
+
+	if (strchr(this->topic, '#') != NULL) 
+	{
+		MQTT_ERROR("failed with # not at start or end");
+		return false;
+	}
+
+	char *pluspos = strchr(this->topic, '+');
+	
+	while (pluspos != nullptr)
 	{
 		if ((*(pluspos - 1) != '/') && (*(pluspos + 1) != '/'))
 		{
+			MQTT_ERROR("failed checking the '+' locations");
 			return false;
 		}
+
+		pluspos = strchr(this->topic, '+');
 	};
 
+	MQTT_INFO("topic is valid");
 	return true;
 }
 
@@ -191,7 +230,7 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
 
 	if (!thisHasWildcards && !thisHasWildcards)
 	{
-		return (os_strcmp(this->topic, other.topic) == 0);
+		return (strcmp(this->topic, other.topic) == 0);
 	}
 
 	// if the either of the topics are just a '#' then this is a match to anything except if
@@ -241,90 +280,3 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
 ******************************************************************************/
 
 
-#ifdef UNIT_TEST
-
-char* MqttServerTopics::_strdup(char *src)
-{
-	char *str;
-	char *p;
-	int len = 0;
-
-	while (src[len])
-		len++;
-	str = (char *)os_malloc(len + 1);
-	p = str;
-	while (*src)
-		*p++ = *src++;
-	*p = '\0';
-	return str;
-}
-
-#if !defined(ARRAY_SIZE)
-/**
- * Macro to calculate the number of entries in an array
- */
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-#endif
-
-int test()
-{
-	int i;
-
-	struct
-	{
-		char *str;
-	} tests0[] = {
-		"#", "jj", "+/a", "adkj/a", "+/a", "adsjk/adakjd/a", "a/+", "a/#", "#/a"};
-
-	for (i = 0; i < sizeof(tests0) / sizeof(char *); ++i)
-	{
-		os_printf("topic %s, isValidName %d\n", tests0[i].str, Topics_isValidName(tests0[i].str));
-		// assert(Topics_isValidName(tests0[i].str) == 1);
-	}
-
-	struct
-	{
-		char *wild;
-		char *topic;
-		int result;
-	} tests1[] = {
-		{"#", "jj", 1},
-		{"+/a", "adkj/a", 1},
-		{"+/a", "adsjk/adakjd/a", 0},
-		{"+/+/a", "adsjk/adakjd/a", 1},
-		{"#/a", "adsjk/adakjd/a", 1},
-		{"test/#", "test/1", 1},
-		{"test/+", "test/1", 1},
-		{"+", "test1", 1},
-		{"+", "test1/k", 0},
-		{"+", "/test1/k", 0},
-		{"/+", "test1/k", 0},
-		{"+", "/jkj", 0},
-		{"/+", "/test1", 1},
-		{"+/+", "/test1", 0},
-		{"+/+", "test1/k", 1},
-		{"/#", "/test1/k", 1},
-		{"/#", "test1/k", 0},
-	};
-
-	for (i = 0; i < ARRAY_SIZE(tests1); ++i)
-	{
-		os_printf("wild: %s, topic %s, result %d %d (should)\n", tests1[i].wild, tests1[i].topic,
-				  Topics_matches(_strdup(tests1[i].wild), 1, _strdup(tests1[i].topic)), tests1[i].result);
-		// assert(Topics_matches(_strdup(tests1[i].wild), _strdup(tests1[i].topic)) == tests1[i].result);
-	}
-
-	struct
-	{
-		char *str;
-		char *result;
-	} tests2[] = {
-		{"#", "#"}, {"ab", "ba"}, {"abc", "cba"}, {"abcd", "dcba"}, {"abcde", "edcba"}};
-	for (i = 0; i < 5; ++i)
-	{
-		os_printf("str: %s, _strrev %s\n", tests2[i].str, _strrev(_strdup(tests2[i].str)));
-		// assert(strcmp(tests2[i].result, _strrev(_strdup(tests2[i].str))) == 0);
-	}
-}
-
-#endif
