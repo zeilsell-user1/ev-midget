@@ -31,6 +31,8 @@ class MqttServerTopic
     private:
         char topic[MAX_TOPIC_LENGTH];
         unsigned char length;
+
+        unsigned char numberOfOccurences(const char *str, const char chr) const;
         
     public:
     

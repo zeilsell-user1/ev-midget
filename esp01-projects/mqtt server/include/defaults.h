@@ -72,13 +72,14 @@
 #define MQTT_ID "ESPBroker"
 #endif
 
+#define DEBUG 1
 #ifdef DEBUG
-#define MQTT_INFO    printf
-#define MQTT_WARNING printf
-#define MQTT_ERROR   printf
+#define MQTT_INFO( format, ... )    printf( format, ## __VA_ARGS__ );printf("\n")
+#define MQTT_WARNING( format, ... ) printf( format, ## __VA_ARGS__ );printf("\n")
+#define MQTT_ERROR( format, ... )   printf( format, ## __VA_ARGS__ );printf("\n")
 #else
-#define MQTT_INFO    //
-#define MQTT_WARNING //
-#define MQTT_ERROR   //
+#define MQTT_INFO( format, ... ) 
+#define MQTT_WARNING( format, ... ) 
+#define MQTT_ERROR( format, ... ) 
 #endif
 

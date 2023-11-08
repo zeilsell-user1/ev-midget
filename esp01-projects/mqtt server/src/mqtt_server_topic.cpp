@@ -115,42 +115,16 @@ bool MqttServerTopic::isValidName() const
     // If '#' is not in the first position, it must be preceded by a '/' character.
     // If '+' is used, it must be preceded by a '/' character.
     // A '+' wildcard must always be followed by a '/' character.
+	// Only one '#' or '+' is allowed in a topic
+	// Although a leading '/' is allowed, in this implemenation it is rejected as bad practice
+	// Although ' ' is allowed, in this implementation it is rejected as bad practice
 	//
-	// A topic can start with a '$' 
+	// A topic can start with a '$' and all that follows is free text
 
     if (*(this->topic) == '\0')
 	{
 		MQTT_ERROR("empty string");
 		return false;
-	}
-	
-    if (*(this->topic) == '$')
-	{
-		return true;
-	}
-	
-    if (*(this->topic) == '#')
-	{
-		if (*(this->topic + 1) == '\0')
-		{
-			return true; // only character
-		}
-		else
-		{
-			return false; // no following characters allowed
-		}
-	}
-	
-    if (*(this->topic + this->length - 1) == '#') // minus the '\0'
-	{
-		if (*(this->topic + this->length - 2) == '/') // minus the '#' and '\0'
-		{
-			return true; // last character is # and preceeded by a /
-		}
-		else
-		{
-			return false; // something other than / before the #
-		}
 	}
 	
     if (*(this->topic) == '/')
@@ -159,24 +133,83 @@ bool MqttServerTopic::isValidName() const
 		return false;
 	}
 
+    if (*(this->topic) == '$')
+	{
+		MQTT_INFO("topic started with $");
+		return true;
+	}
+	
+	if (strchr(this->topic, ' ') != NULL)
+	{
+		MQTT_ERROR("space character found in topic");
+		return false;
+	}
+
+	if (strstr(this->topic, "//") != NULL)
+	{
+		MQTT_ERROR("'//' found in topic");
+		return false;
+	}
+
+	if ((strchr(this->topic, '#') != NULL) && (strchr(this->topic, '+') != NULL))
+	{
+		MQTT_ERROR("failed with # and +");
+		return false;
+	}
+	
+	if (numberOfOccurences((const char *)(this->topic), (const char)'#') > 1)
+	{
+		MQTT_ERROR("more than 1 '#' in topic");
+		return false;
+	}
+	
+	if (numberOfOccurences((const char *)(this->topic), (const char)'+') > 1)
+	{
+		MQTT_ERROR("more than 1 '+' in topic");
+		return false;
+	}
+
+    if (*(this->topic) == '#')
+	{
+		if (*(this->topic + 1) == '\0')
+		{
+		    MQTT_INFO("just a '#' in the topic");
+			return true;
+		}
+		else
+		{
+			MQTT_ERROR("a '#' at the start can't be followed by anything");
+			return false; 
+		}
+	}
+
+    if (*(this->topic + this->length - 1) == '#') // minus the '\0'
+	{
+		if (*(this->topic + this->length - 2) == '/') // minus the '#' and '\0'
+		{
+		    MQTT_INFO("topic ends with a '/#' so okay");
+			return true; 
+		}
+		else
+		{
+			MQTT_ERROR("The '#' at the end isn't preceeded by a '/'");
+			return false; 
+		}
+	}
+	
 	if (strchr(this->topic, '#') != NULL) 
 	{
-		MQTT_ERROR("failed with # not at start or end");
+		MQTT_ERROR("failed with # as checks for start or end already completed");
 		return false;
 	}
 
 	char *pluspos = strchr(this->topic, '+');
 	
-	while (pluspos != nullptr)
+	if ((pluspos != NULL) && ((*(pluspos - 1) != '/')  || (*(pluspos + 1) != '/')))
 	{
-		if ((*(pluspos - 1) != '/') && (*(pluspos + 1) != '/'))
-		{
-			MQTT_ERROR("failed checking the '+' locations");
-			return false;
-		}
-
-		pluspos = strchr(this->topic, '+');
-	};
+		MQTT_ERROR("fthe '+' didn't have '/' either side");
+		return false;
+	}
 
 	MQTT_INFO("topic is valid");
 	return true;
@@ -217,19 +250,26 @@ bool MqttServerTopic::hasWildcards() const
 
 bool MqttServerTopic::operator==(MqttServerTopic& other)
 {
-	bool thisHasWildcards = true;
-	bool thatHasWildcards = true;
+	bool thisHasWildcards = this->hasWildcards();
+	bool thatHasWildcards = other.hasWildcards();
+
+    MQTT_INFO("this topic = %s", this->topic);
+	MQTT_INFO("that topic = %s", other.topic);
+	MQTT_INFO("thisHasWildcards %i", thisHasWildcards);
+	MQTT_INFO("thatHasWildcards %i", thatHasWildcards);
 
 	// only one of the topics may have a wildcard, so check for wildcards on both
 
-	if ((thisHasWildcards = this->hasWildcards()) && (thatHasWildcards = other.hasWildcards())) {
+	if ((thisHasWildcards && thatHasWildcards)) {
+		MQTT_INFO("Wildcards in both topics so no match");
 		return false;
 	}
 
 	// if neither have wildcards then straight compare
 
-	if (!thisHasWildcards && !thisHasWildcards)
+	if (!thisHasWildcards && !thatHasWildcards)
 	{
+		MQTT_INFO("no wildcards so straight compare");
 		return (strcmp(this->topic, other.topic) == 0);
 	}
 
@@ -239,7 +279,11 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
 	if ((*(this->topic) == '#') || (*(other.topic) == '#'))
 	{
 		if ((*(this->topic) == '$') || (*(other.topic) == '$'))
+		{
+			MQTT_INFO("dont match # and $");
 			return false;
+		}
+		MQTT_INFO("# wildcard matches all");
 		return true;
 	}
 
@@ -247,12 +291,22 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
 	// unless we find a wildcard. If either token is a '#' then we match the rest of the
 	// topic. If the match a '+' then the token check gets matched regardless
 
-	char *topicToken, *topicTokenSave;
-	topicToken = strtok_r(this->topic, "/", &topicTokenSave);
+	char *topicToken, topicCopy[MAX_TOPIC_LENGTH], *topicTokenSave;
+	char *otherTopicToken, otherTopicCopy[MAX_TOPIC_LENGTH], *otherTopicTokenSave;
 
-	char *otherTopicToken, * otherTopicTokenSave;
-	otherTopicToken = strtok_r(other.topic, "/", &otherTopicTokenSave);
+	memset(topicCopy, '\0', MAX_TOPIC_LENGTH);
+	memset(otherTopicCopy, '\0', MAX_TOPIC_LENGTH);
 
+	strcpy(topicCopy, this->topic);
+	strcpy(otherTopicCopy, other.topic);
+
+	MQTT_INFO("copy this %s, copy other %s", topicCopy, otherTopicCopy);
+
+	topicToken = strtok_r(topicCopy, "/", &topicTokenSave);
+	otherTopicToken = strtok_r(otherTopicCopy, "/", &otherTopicTokenSave);
+
+	MQTT_INFO("time to compare tokens - %s, %s", topicToken, otherTopicToken);
+	
 	bool match = true;
 
 	while ( (topicToken != NULL) && (otherTopicToken != NULL) && 
@@ -261,17 +315,29 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
 	{
 		// both tokens are valid. If they match then skip to next token
 
-		if (strcmp(topicToken, otherTopicTokenSave) != 0)
+		if (strcmp(topicToken, otherTopicToken) != 0)
 		{
+			MQTT_INFO("the tokens don't match");
 			// need to check if this is a '+', as this implies a match
 
 			if ((*topicToken != '+') && (*otherTopicToken != '+'))
 			{
+				MQTT_INFO("so return a false match");
 				match = false; 
 			}
+			else
+			{
+				MQTT_INFO("but a + was found so keep match true");
+				match = true;
+			}
 		}
+		topicToken = strtok_r(topicTokenSave, "/", &topicTokenSave);
+		otherTopicToken = strtok_r(otherTopicTokenSave, "/", &otherTopicTokenSave);
+		MQTT_INFO("next tokens to compare - %s, %s", topicToken, otherTopicToken);
 	}
 
+	MQTT_INFO("does this topic %s = that topic %s?", this->topic, other.topic);
+    MQTT_INFO("return %i", match);
     return match;
 } /* end matches */
 
@@ -279,4 +345,14 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
  * Private methods
 ******************************************************************************/
 
+unsigned char MqttServerTopic::numberOfOccurences(const char *str, const char chr) const
+{
+	unsigned char count = 0;
 
+  	for (int i = 0; i < strnlen(str, MAX_TOPIC_LENGTH) && (i < 127); i++)
+	{
+		if (str[i] == chr) count++;
+	}
+
+  	return count;
+}
