@@ -47,27 +47,27 @@ TcpSession::TcpSession()
     this->messageAcknowledgedCb = nullCallback1;
 }
 
-bool TcpSession::regsiterSessionConnect_cb(void *cb)
+bool TcpSession::registerSessionConnect_cb(void *cb, void *obj)
 {
     this->connectedCb = (void (*)(void *arg))cb;
 }
 
-bool TcpSession::regsiterSessionDisconnect_cb(void *cb)
+bool TcpSession::registerSessionDisconnect_cb(void *cb, void *obj)
 {
     this->disconnectedCb = (void (*)(void *arg))cb;
 }
 
-bool TcpSession::registerIncomingMessage_cb(void *cb)
+bool TcpSession::registerIncomingMessage_cb(void *cb, void *obj)
 {
     this->incomingMessageCb = (void (*)(void *arg, char *pdata, unsigned short len))cb;
 }
 
-bool TcpSession::registerMessageSent_cb(void *cb)
+bool TcpSession::registerMessageSent_cb(void *cb, void *obj)
 {
     this->messageSentCb = (void (*)(void *arg))cb;
 }
 
-bool TcpSession::regsiterMessageAcknowledged_cb(void *cb)
+bool TcpSession::regsiterMessageAcknowledged_cb(void *cb, void *obj)
 {
     this->messageAcknowledgedCb = (void (*)(void *arg))cb;
 }

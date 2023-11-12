@@ -81,7 +81,7 @@ class MqttMsg {
 
     typedef struct mqtt_connection
     {
-      mqtt_message_t message;
+      //mqtt_message_t message;
       unsigned short message_id;
       unsigned char *buffer;
       unsigned short buffer_length;
@@ -135,27 +135,27 @@ class MqttMsg {
     static inline int mqtt_get_qos(unsigned char *buffer) { return (buffer[0] & 0x06) >> 1; }
     static inline int mqtt_get_retain(unsigned char *buffer) { return (buffer[0] & 0x01); }
 
-    mqtt_message_t *mqtt_msg_connect(mqtt_connection_t *connection, mqtt_connection_info_t *info);
-    mqtt_message_t *mqtt_msg_connack(mqtt_connection_t *connection, enum mqtt_connect_return_code retcode);
-    mqtt_message_t *mqtt_msg_publish(mqtt_connection_t *connection, const char *topic, const char *data, int data_length, int qos, int retain, unsigned short *message_id);
-    mqtt_message_t *mqtt_msg_puback(mqtt_connection_t *connection, unsigned short message_id);
-    mqtt_message_t *mqtt_msg_pubrec(mqtt_connection_t *connection, unsigned short message_id);
-    mqtt_message_t *mqtt_msg_pubrel(mqtt_connection_t *connection, unsigned short message_id);
-    mqtt_message_t *mqtt_msg_pubcomp(mqtt_connection_t *connection, unsigned short message_id);
-    mqtt_message_t *mqtt_msg_subscribe(mqtt_connection_t *connection, const char *topic, int qos, unsigned short *message_id);
-    mqtt_message_t *mqtt_msg_suback(mqtt_connection_t *connection, unsigned char *ret_codes, unsigned char ret_codes_len, unsigned short message_id);
-    mqtt_message_t *mqtt_msg_unsubscribe(mqtt_connection_t *connection, const char *topic, unsigned short *message_id);
-    mqtt_message_t *mqtt_msg_unsuback(mqtt_connection_t *connection, unsigned short message_id);
-    mqtt_message_t *mqtt_msg_pingreq(mqtt_connection_t *connection);
-    mqtt_message_t *mqtt_msg_pingresp(mqtt_connection_t *connection);
-    mqtt_message_t *mqtt_msg_disconnect(mqtt_connection_t *connection);
+    // mqtt_message_t *mqtt_msg_connect(mqtt_connection_t *connection, mqtt_connection_info_t *info);
+    // mqtt_message_t *mqtt_msg_connack(mqtt_connection_t *connection, enum mqtt_connect_return_code retcode);
+    // mqtt_message_t *mqtt_msg_publish(mqtt_connection_t *connection, const char *topic, const char *data, int data_length, int qos, int retain, unsigned short *message_id);
+    // mqtt_message_t *mqtt_msg_puback(mqtt_connection_t *connection, unsigned short message_id);
+    // mqtt_message_t *mqtt_msg_pubrec(mqtt_connection_t *connection, unsigned short message_id);
+    // mqtt_message_t *mqtt_msg_pubrel(mqtt_connection_t *connection, unsigned short message_id);
+    // mqtt_message_t *mqtt_msg_pubcomp(mqtt_connection_t *connection, unsigned short message_id);
+    // mqtt_message_t *mqtt_msg_subscribe(mqtt_connection_t *connection, const char *topic, int qos, unsigned short *message_id);
+    // mqtt_message_t *mqtt_msg_suback(mqtt_connection_t *connection, unsigned char *ret_codes, unsigned char ret_codes_len, unsigned short message_id);
+    // mqtt_message_t *mqtt_msg_unsubscribe(mqtt_connection_t *connection, const char *topic, unsigned short *message_id);
+    // mqtt_message_t *mqtt_msg_unsuback(mqtt_connection_t *connection, unsigned short message_id);
+    // mqtt_message_t *mqtt_msg_pingreq(mqtt_connection_t *connection);
+    // mqtt_message_t *mqtt_msg_pingresp(mqtt_connection_t *connection);
+    // mqtt_message_t *mqtt_msg_disconnect(mqtt_connection_t *connection);
 
   private:
     int init_message(mqtt_connection_t *connection);
     int append_string(mqtt_connection_t *connection, const char *string, int len);
     unsigned short append_message_id(mqtt_connection_t *connection, unsigned short message_id);
-    mqtt_message_t *fail_message(mqtt_connection_t * connection);
-    mqtt_message_t *fini_message(mqtt_connection_t * connection, int type, int dup, int qos, int retain);
+    // mqtt_message_t *fail_message(mqtt_connection_t * connection);
+    // mqtt_message_t *fini_message(mqtt_connection_t * connection, int type, int dup, int qos, int retain);
     
 };
 

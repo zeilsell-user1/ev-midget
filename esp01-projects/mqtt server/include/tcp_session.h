@@ -52,12 +52,12 @@ class TcpSession
         void (*messageAcknowledgedCb)(void *arg);
 
     public:
-    
+        TcpSession();
         TcpSession(unsigned char *ipAddress, unsigned short port); // client
         TcpSession(unsigned short port); // server
 
-        bool regsiterSessionConnect_cb(void *cb, void *obj);
-        bool regsiterSessionDisconnect_cb(void *cb, void *obj);
+        bool registerSessionConnect_cb(void *cb, void *obj);
+        bool registerSessionDisconnect_cb(void *cb, void *obj);
         bool registerIncomingMessage_cb(void *cb, void *obj);
         bool registerMessageSent_cb(void *cb, void *obj);
         bool regsiterMessageAcknowledged_cb(void *cb, void *obj);

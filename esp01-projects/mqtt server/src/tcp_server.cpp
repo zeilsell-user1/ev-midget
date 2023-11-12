@@ -22,67 +22,48 @@
  *******************************************************************************/
 
 #include <string.h>
-#include "defaults.h"
 #include "tcp_server.h"
 
-void nullCallback1(void *arg)
-{
-    TCP_ERROR("callback called without initialisation");
-}
-void nullcallback2(void *arg, char *pdata, unsigned short len)
+/*******************************************************************************
+ * local null callback used to make sure any bugs are handled correctly. THis
+ * is outside of the class so that the callbacks can work across classes
+*******************************************************************************/
+
+void nullCallback1(TcpSession *tcpSession)
 {
     TCP_ERROR("callback called without initialisation");
 }
 
-TcpSession::TcpSession()
+/*******************************************************************************
+ * Class Implemenation - public
+*******************************************************************************/
+
+TcpServer::TcpServer()
 {
-    this->sessionValid = false;
-    //struct espconn *pesp_conn;
     memset(this->IPAddress, '\0', 4);
-    this->sessionExpiryIntervalTimeout = 0;
+    this->port = 0;
     this->connectedCb = nullCallback1;
-    this->disconnectedCb = nullCallback1;
-    this->incomingMessageCb = nullcallback2;
-    this->messageSentCb = nullCallback1;
-    this->messageAcknowledgedCb = nullCallback1;
 }
 
-bool TcpSession::regsiterSessionConnect_cb(void *cb)
+TcpServer::TcpServer(unsigned char *ipAddress, unsigned short port) 
 {
-    this->connectedCb = (void (*)(void *arg))cb;
+    memcpy(this->IPAddress, ipAddress, 4);
+    this->port = port;
+    this->connectedCb = nullCallback1;
 }
 
-bool TcpSession::regsiterSessionDisconnect_cb(void *cb)
+TcpServer::TcpServer(unsigned short port)
 {
-    this->disconnectedCb = (void (*)(void *arg))cb;
+    memset(this->IPAddress, '\0', 4);
+    this->port = port;
+    this->connectedCb = nullCallback1;
 }
 
-bool TcpSession::registerIncomingMessage_cb(void *cb)
+bool TcpServer::registerSessionConnect_cb(void *cb, void *obj)
 {
-    this->incomingMessageCb = (void (*)(void *arg, char *pdata, unsigned short len))cb;
+    this->connectedCb = (void (*)(TcpSession *tcpSession))cb;
 }
 
-bool TcpSession::registerMessageSent_cb(void *cb)
-{
-    this->messageSentCb = (void (*)(void *arg))cb;
-}
-
-bool TcpSession::regsiterMessageAcknowledged_cb(void *cb)
-{
-    this->messageAcknowledgedCb = (void (*)(void *arg))cb;
-}
-
-bool TcpSession::startTcpServer(unsigned short port)
-{
-
-}
-
-bool TcpSession::startTcpClient(unsigned char* ipAddress, unsigned short port)
-{
-
-}
-
-/*************************************************************************/
-/*
- * Private Functions
- */
+/*******************************************************************************
+ * Class Implemenation - private
+*******************************************************************************/

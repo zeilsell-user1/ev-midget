@@ -26,6 +26,7 @@
 
 #include "defaults.h"
 #include "mqtt_session.h"
+#include "tcp_session.h"
 
 class MqttSessionList
 {
@@ -37,6 +38,7 @@ class MqttSessionList
         MqttSessionList();
         
         bool isFull();
+        void addSession(TcpSession *tcpSession);
 };
 
 #endif /* MQTT_SESSION_LIST_H */

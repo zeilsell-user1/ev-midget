@@ -45,15 +45,14 @@ class TcpServer
     private:
         //struct espconn *pesp_conn;
         unsigned char IPAddress[4];
+        unsigned short port;
         
         void (*connectedCb)(TcpSession *session);
 
     public:
+        TcpServer();
         TcpServer(unsigned char *ipAddress, unsigned short port); 
         TcpServer(unsigned short port); 
-
-        bool addPassiveListener(unsigned short port);
-        TcpSession addActiveConnection(unsigned char* ipAddress, unsigned short port);
 
         bool registerSessionConnect_cb(void *cb, void *obj);
 };

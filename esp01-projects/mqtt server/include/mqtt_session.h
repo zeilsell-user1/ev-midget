@@ -25,6 +25,8 @@
 #define MQTT_SESSION_H
 
 #include "defaults.h"
+#include "mqtt_topic.h"
+#include "mqtt_msg.h"
 //#include "espconn.h"
 
 class MqttSession
@@ -44,10 +46,18 @@ class MqttSession
         void WaitForPubRel_HandleMsg(MqttMsg msg);
         void Disconnected_HandleMsg(MqttMsg msg);
 
+        void print_topic(MqttTopic *topic) const;
+        bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
 
     public:
     
         MqttSession();
+        
+        void handleTcpConnect(void *args);
+        void handleTcpDisconnect(void *args);
+        void handleTcpMessageSent(void *args);
+        void handleTcpMessageAcknowledged(void *args);
+        void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
 };
 
 #endif /* MQTT_SESSION_H */

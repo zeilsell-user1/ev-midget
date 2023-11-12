@@ -23,16 +23,61 @@
 
 #include "mqtt_server.h"
 
+/*
+ ******************************************************************************
+ * Callback functions to receive data and events from the TCP server. These
+ * are outside the class so that the TCP server remains indifferent to the
+ * deatils of the client calling it.
+ ******************************************************************************
+ */
+
+// void sessionDisconnectCb(void *obj, void *args)
+// {
+//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
+//     mqttServer->handleTcpDisconnect(args);
+// }
+
+// void messageSentCb(void *obj, void *args)
+// {
+//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
+//     mqttServer->handleTcpMessageSent(args);
+// }
+
+// void messageAcknowledgedCb(void *obj, void *args)
+// {
+//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
+//     mqttServer->handleTcpMessageAcknowledged(args);
+// }
+
+// void incomingMessageCb(void *obj, void *args, char *pdata, unsigned short len)
+// {
+//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
+//     mqttServer->handleTcpIncomingMessage(args, pdata, len);
+// }
+
 MqttServer::MqttServer()
 {
-
+    // this->tcpSession.regsiterSessionDisconnect_cb(sessionDisconnectCb, (void *)this);
+    // this->tcpSession.registerIncomingMessage_cb(incomingMessageCb, (void *)this);
+    // this->tcpSession.registerMessageSent_cb(messageSentCb, (void *)this);
+    // this->tcpSession.regsiterMessageAcknowledged_cb(messageAcknowledgedCb, (void *)this);
 }
 
-MqttServer::MqttServer(unsigned short portno)
-{
+// void MqttServer::handleTcpDisconnect(void *args)
+// {
+// }
 
-}
+// void MqttServer::handleTcpMessageSent(void *args)
+// {
+// }
 
+// void MqttServer::handleTcpMessageAcknowledged(void *args)
+// {
+// }
+
+// void MqttServer::handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len)
+// {
+// }
 
 // State Machine:
 

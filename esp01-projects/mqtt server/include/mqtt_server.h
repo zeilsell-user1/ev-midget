@@ -41,21 +41,12 @@ class MqttServer
     unsigned char* ipAddress; 
     unsigned short port;
 
-    MqttServer();
-
-    // void print_topic(topic_entry *topic) const;
-    // bool publish_topic(topic_entry *topic_e, uint8_t *topic, uint8_t *data, uint16_t data_len) const;
-
 public:
+    MqttServer();
     MqttServer(unsigned char* ipAddress, unsigned short port); // client
     MqttServer(unsigned short portno); // server
 
-    void handleTcpConnect(void *args);
-    void handleTcpConnect(void *args);
-    void handleTcpDisconnect(void *args);
-    void handleTcpMessageSent(void *args);
-    void handleTcpMessageAcknowledged(void *args);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+    void handleTcpConnect(TcpSession *tcpSession);
 
     // state machine for the MQTT session
     void WaitForConnect_HandleMsg(MqttMsg msg);
