@@ -24,6 +24,12 @@
 #ifndef _MQTT_SERVER_H_
 #define _MQTT_SERVER_H_
 
+#ifdef ESP8266
+#include <lwip/ip.h>
+#else
+#include "../test/test_mqtt_server/ip.h"
+#endif
+
 #include "tcp_server.h"
 #include "tcp_session.h"
 #include "mqtt_session_list.h"
@@ -38,12 +44,12 @@ class MqttServer
   private:
     MqttSessionList sessionList;
     TcpServer tcpServer;
-    unsigned char* ipAddress; 
+    ip_addr_t ipAddress; 
     unsigned short port;
 
 public:
     MqttServer();
-    MqttServer(unsigned char* ipAddress, unsigned short port); // client
+    MqttServer(ip_addr_t ipAddress, unsigned short port); // client
     MqttServer(unsigned short portno); // server
 
     void handleTcpConnect(TcpSession *tcpSession);

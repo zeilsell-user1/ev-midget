@@ -5,7 +5,9 @@
 #include <mqtt_server.h>
 
 TEST_CASE("insantiation") {
-  MqttServer server = MqttServer({"192", "168", "4", "2"}, MQTT_BROKER_PORT);
+  ip_addr_t ipAddress;
+  ip4_addr_set_u32(&ipAddress, ipaddr_addr("192.168.4.2"));
+  MqttServer server = MqttServer(ipAddress, MQTT_BROKER_PORT);
 
   //REQUIRE_EQ(, true);
 }

@@ -21,7 +21,6 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#include <string.h>
 #include "mqtt_server.h"
 #include "tcp_server.h"
 
@@ -47,14 +46,14 @@ void sessionConnectCb(void *obj, TcpSession *tcpSession)
 
 MqttServer::MqttServer()
 {
-    memset(this->ipAddress, '\0', 4);
+    ip4_addr_set_any(&this->ipAddress);
     this->port = port;
     this->tcpServer = NULL;
 }
 
-MqttServer::MqttServer(unsigned char *ipAddress, unsigned short port) // client
+MqttServer::MqttServer(ip_addr_t ipAddress, unsigned short port) // client
 {
-    memcpy(this->ipAddress, ipAddress, 4);
+    this->ipAddress = ipAddress;
     this->port = port;
     this->tcpServer = TcpServer(this->ipAddress, this->port);
     this->tcpServer.registerSessionConnect_cb(sessionConnectCb, (void *)this);
@@ -62,7 +61,7 @@ MqttServer::MqttServer(unsigned char *ipAddress, unsigned short port) // client
 
 MqttServer::MqttServer(unsigned short port) // server
 {
-    memset(this->ipAddress, '\0', 4);
+    ip4_addr_set_any(&this->ipAddress);
     this->port = port;
     this->tcpServer = TcpServer(this->port);
     this->tcpServer.registerSessionConnect_cb(sessionConnectCb, (void *)this);

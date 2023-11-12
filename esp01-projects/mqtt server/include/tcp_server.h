@@ -25,6 +25,11 @@
 #define TCP_SERVER_H
 
 #include "defaults.h"
+#ifdef ESP8266
+#include <lwip/ip.h>
+#else
+#include "../test/test_mqtt_server/ip.h"
+#endif
 #include "tcp_session.h"
 
 // A TCP (Transmission Control Protocol) server is a network service that 
@@ -44,17 +49,17 @@ class TcpServer
 {
     private:
         //struct espconn *pesp_conn;
-        unsigned char IPAddress[4];
+        ip_addr_t ipAddress;
         unsigned short port;
         
         void (*connectedCb)(TcpSession *session);
 
     public:
         TcpServer();
-        TcpServer(unsigned char *ipAddress, unsigned short port); 
+        TcpServer(ip_addr_t ipAddress, unsigned short port); 
         TcpServer(unsigned short port); 
 
-        bool registerSessionConnect_cb(void *cb, void *obj);
+        bool registerSessionConnect_cb(void (*cb)(void*, TcpSession*), void *obj);
 };
 
 #endif //TCP_SERVER_H

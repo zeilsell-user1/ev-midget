@@ -38,7 +38,7 @@ TcpSession::TcpSession()
 {
     this->sessionValid = false;
     //struct espconn *pesp_conn;
-    memset(this->IPAddress, '\0', 4);
+    ip4_addr_set_any(&this->ipAddress);
     this->sessionExpiryIntervalTimeout = 0;
     this->connectedCb = nullCallback1;
     this->disconnectedCb = nullCallback1;
@@ -77,7 +77,7 @@ bool TcpSession::startTcpServer(unsigned short port)
 
 }
 
-bool TcpSession::startTcpClient(unsigned char* ipAddress, unsigned short port)
+bool TcpSession::startTcpClient(ip_addr ipAddress, unsigned short port)
 {
 
 }

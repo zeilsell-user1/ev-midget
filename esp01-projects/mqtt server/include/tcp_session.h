@@ -24,6 +24,12 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
+
+#ifdef ESP8266
+#include <lwip/ip.h>
+#else
+#include "../test/test_mqtt_server/ip.h"
+#endif
 #include "defaults.h"
 
 // In the context of TCP (Transmission Control Protocol), a "TCP session" 
@@ -42,7 +48,7 @@ class TcpSession
     private:
         bool sessionValid;
         //struct espconn *pesp_conn;
-        unsigned char IPAddress[4];
+        ip_addr_t ipAddress;
         unsigned long sessionExpiryIntervalTimeout;
         
         void (*connectedCb)(void *arg);
@@ -53,7 +59,7 @@ class TcpSession
 
     public:
         TcpSession();
-        TcpSession(unsigned char *ipAddress, unsigned short port); // client
+        TcpSession(ip_addr_t ipAddress, unsigned short port); // client
         TcpSession(unsigned short port); // server
 
         bool registerSessionConnect_cb(void *cb, void *obj);
@@ -63,7 +69,7 @@ class TcpSession
         bool regsiterMessageAcknowledged_cb(void *cb, void *obj);
 
         bool startTcpServer(unsigned short port);
-        bool startTcpClient(unsigned char* ipAddress, unsigned short port);
+        bool startTcpClient(ip_addr_t ipAddress, unsigned short port);
 };
 
 #endif //TCP_SESSION_H

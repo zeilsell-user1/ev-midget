@@ -40,26 +40,26 @@ void nullCallback1(TcpSession *tcpSession)
 
 TcpServer::TcpServer()
 {
-    memset(this->IPAddress, '\0', 4);
+    ip4_addr_set_any(&this->ipAddress);
     this->port = 0;
     this->connectedCb = nullCallback1;
 }
 
-TcpServer::TcpServer(unsigned char *ipAddress, unsigned short port) 
+TcpServer::TcpServer(ip_addr_t ipAddress, unsigned short port) 
 {
-    memcpy(this->IPAddress, ipAddress, 4);
+    this->ipAddress = ipAddress;
     this->port = port;
     this->connectedCb = nullCallback1;
 }
 
 TcpServer::TcpServer(unsigned short port)
 {
-    memset(this->IPAddress, '\0', 4);
+    ip4_addr_set_any(&this->ipAddress);
     this->port = port;
     this->connectedCb = nullCallback1;
 }
 
-bool TcpServer::registerSessionConnect_cb(void *cb, void *obj)
+bool TcpServer::registerSessionConnect_cb(void (*cb)(void*, TcpSession*), void *obj)
 {
     this->connectedCb = (void (*)(TcpSession *tcpSession))cb;
 }
