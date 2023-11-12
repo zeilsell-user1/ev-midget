@@ -1,24 +1,24 @@
 #define DOCTEST_CONFIG_IMPLEMENT  // REQUIRED: Enable custom main()
 #define DOCTEST_THREAD_LOCAL
 #include <doctest.h>
-#include <mqtt_server_topic.h>
+#include <mqtt_topic.h>
 
 TEST_CASE("insantiation (empty)") {
-  MqttServerTopic topic = MqttServerTopic();
+  MqttTopic topic = MqttTopic();
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0);
 }
 
 TEST_CASE("insantiation (valid topic)") {
-  MqttServerTopic topic = MqttServerTopic("house/frontroom/tempurature");
+  MqttTopic topic = MqttTopic("house/frontroom/tempurature");
 
   REQUIRE_EQ(topic.isValidName(), true);
   REQUIRE_EQ(topic.getLength(), 27); 
 }
 
 TEST_CASE("insantiation (late completion)") {
-  MqttServerTopic topic = MqttServerTopic();
+  MqttTopic topic = MqttTopic();
   topic.setTopic("house/frontroom/tempurature");
 
   REQUIRE_EQ(topic.isValidName(), true);
@@ -26,116 +26,116 @@ TEST_CASE("insantiation (late completion)") {
 }
 
 TEST_CASE("insantiation (leading '/')") {
-  MqttServerTopic topic = MqttServerTopic("/house/frontroom/tempurature");
+  MqttTopic topic = MqttTopic("/house/frontroom/tempurature");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (double '//')") {
-  MqttServerTopic topic = MqttServerTopic("/house//frontroom/tempurature");
+  MqttTopic topic = MqttTopic("/house//frontroom/tempurature");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (space in topic )") {
-  MqttServerTopic topic = MqttServerTopic("/house/front room/tempurature");
+  MqttTopic topic = MqttTopic("/house/front room/tempurature");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (single '#')") {
-  MqttServerTopic topic = MqttServerTopic("#");
+  MqttTopic topic = MqttTopic("#");
 
   REQUIRE_EQ(topic.isValidName(), true);
   REQUIRE_EQ(topic.getLength(), 1); 
 }
 
 TEST_CASE("insantiation ('#' with char after)") {
-  MqttServerTopic topic = MqttServerTopic("#a");
+  MqttTopic topic = MqttTopic("#a");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (use of '#' at end)") {
-  MqttServerTopic topic = MqttServerTopic("house/frontroom/#");
+  MqttTopic topic = MqttTopic("house/frontroom/#");
 
   REQUIRE_EQ(topic.isValidName(), true);
   REQUIRE_EQ(topic.getLength(), 17); 
 }
 
 TEST_CASE("insantiation (invalid of '#/' at end)") {
-  MqttServerTopic topic = MqttServerTopic("house/frontroom/#/");
+  MqttTopic topic = MqttTopic("house/frontroom/#/");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (several '#')") {
-  MqttServerTopic topic = MqttServerTopic("house/#/frontroom/#");
+  MqttTopic topic = MqttTopic("house/#/frontroom/#");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation ('+' and '#')") {
-  MqttServerTopic topic = MqttServerTopic("house/+/frontroom/#");
+  MqttTopic topic = MqttTopic("house/+/frontroom/#");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (several '+')") {
-  MqttServerTopic topic = MqttServerTopic("house/+/frontroom/+/size");
+  MqttTopic topic = MqttTopic("house/+/frontroom/+/size");
 
   REQUIRE_EQ(topic.isValidName(), false);
   REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (single '+')") {
-   MqttServerTopic topic = MqttServerTopic("+");
+   MqttTopic topic = MqttTopic("+");
 
    REQUIRE_EQ(topic.isValidName(), false);
    REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("insantiation (single '+' at end)") {
-   MqttServerTopic topic = MqttServerTopic("house/frontroom/+");
+   MqttTopic topic = MqttTopic("house/frontroom/+");
 
    REQUIRE_EQ(topic.isValidName(), false);
    REQUIRE_EQ(topic.getLength(), 0); 
 }
 
 TEST_CASE("== operator (same)") {
-   MqttServerTopic topic1 = MqttServerTopic("house/frontroom/tempurature");
-   MqttServerTopic topic2 = MqttServerTopic("house/frontroom/tempurature");
+   MqttTopic topic1 = MqttTopic("house/frontroom/tempurature");
+   MqttTopic topic2 = MqttTopic("house/frontroom/tempurature");
 
    REQUIRE_EQ(topic1 == topic2, true);
 }
 
 TEST_CASE("== operator (not same)") {
-   MqttServerTopic topic1 = MqttServerTopic("house/frontroom/tempurature");
-   MqttServerTopic topic2 = MqttServerTopic("house/frontroom/humidity");
+   MqttTopic topic1 = MqttTopic("house/frontroom/tempurature");
+   MqttTopic topic2 = MqttTopic("house/frontroom/humidity");
 
    REQUIRE_EQ(topic1 == topic2, false);
 }
 
 TEST_CASE("== operator (valid #)") {
-   MqttServerTopic topic1 = MqttServerTopic("house/frontroom/tempurature");
-   MqttServerTopic topic2 = MqttServerTopic("house/frontroom/#");
+   MqttTopic topic1 = MqttTopic("house/frontroom/tempurature");
+   MqttTopic topic2 = MqttTopic("house/frontroom/#");
 
    REQUIRE_EQ(topic1 == topic2, true);
 }
 
 TEST_CASE("== operator (+ operations)") {
-   MqttServerTopic topic1 = MqttServerTopic("house/frontroom/tempurature");
-   MqttServerTopic topic2 = MqttServerTopic("house/kitchen/tempurature");
-   MqttServerTopic topic3 = MqttServerTopic("house/+/tempurature");
-   MqttServerTopic topic4 = MqttServerTopic("house/+/humidity");
-   MqttServerTopic topic5 = MqttServerTopic("house/+/cupboard/tempurature");
+   MqttTopic topic1 = MqttTopic("house/frontroom/tempurature");
+   MqttTopic topic2 = MqttTopic("house/kitchen/tempurature");
+   MqttTopic topic3 = MqttTopic("house/+/tempurature");
+   MqttTopic topic4 = MqttTopic("house/+/humidity");
+   MqttTopic topic5 = MqttTopic("house/+/cupboard/tempurature");
 
    REQUIRE_EQ(topic1 == topic2, false);
    REQUIRE_EQ(topic1 == topic3, true);

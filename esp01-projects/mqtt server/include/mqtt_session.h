@@ -21,29 +21,33 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SERVER_TOPIC_H
-#define MQTT_SERVER_TOPIC_H
+#ifndef MQTT_SESSION_H
+#define MQTT_SESSION_H
 
 #include "defaults.h"
+//#include "espconn.h"
 
-class MqttServerTopic
+class MqttSession
 {
     private:
-        char topic[MAX_TOPIC_LENGTH];
-        unsigned char length;
+        bool sessionValid;
+        unsigned char will_qos;
+        int will_retain;
+        int clean_session;
+        //struct espconn *pesp_conn;
+        unsigned char clientId[23];
+        unsigned char IPAddress[4];
+        unsigned long sessionExpiryIntervalTimeout;
+            
+        void WaitForConnect_HandleMsg(MqttMsg msg);
+        void Connected_HandleMsg(MqttMsg msg);
+        void WaitForPubRel_HandleMsg(MqttMsg msg);
+        void Disconnected_HandleMsg(MqttMsg msg);
 
-        unsigned char numberOfOccurences(const char *str, const char chr) const;
-        
+
     public:
     
-        MqttServerTopic();
-        MqttServerTopic(char const *topic);
-        bool setTopic(char const *topic);
-        void resetTopic();
-        unsigned char getLength();
-        bool isValidName() const;
-        bool hasWildcards() const;
-        bool operator==(MqttServerTopic& other);
+        MqttSession();
 };
 
-#endif /* MQTT_SERVER_TOPIC_H */
+#endif /* MQTT_SESSION_H */

@@ -34,23 +34,23 @@
  * Converted to C++ with proper OOP structure
  *******************************************************************************/
 
-//#include "c_types.h"
-//#include "ets_sys.h"
-//#include "osapi.h"
-//#include "os_type.h"
+// #include "c_types.h"
+// #include "ets_sys.h"
+// #include "osapi.h"
+// #include "os_type.h"
 
 #include <string.h>
-#include "mqtt_server_msg.h"
-//#include "user_config.h"
+#include "mqtt_msg.h"
+// #include "user_config.h"
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::fail_message(mqtt_connection_t *connection)
+mqtt_message_t *MqttMsg::MqttMsg::fail_message(mqtt_connection_t *connection)
 {
     connection->message.data = connection->buffer;
     connection->message.length = 0;
     return &connection->message;
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::fini_message(mqtt_connection_t *connection, int type, int dup, int qos, int retain)
+mqtt_message_t *MqttMsg::MqttMsg::fini_message(mqtt_connection_t *connection, int type, int dup, int qos, int retain)
 {
     int remaining_length = connection->message.length - MQTT_MAX_FIXED_HEADER_SIZE;
 
@@ -73,7 +73,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::fini_message(mqtt_connection_t *co
     return &connection->message;
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_connect(mqtt_connection_t *connection, mqtt_connection_info_t *info)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_connect(mqtt_connection_t *connection, mqtt_connection_info_t *info)
 {
     struct mqtt_connect_variable_header *variable_header;
 
@@ -129,7 +129,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_connect(mqtt_connection_t
     return fini_message(connection, MQTT_MSG_TYPE_CONNECT, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_connack(mqtt_connection_t *connection,
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_connack(mqtt_connection_t *connection,
                                                                enum mqtt_connect_return_code retcode)
 {
     init_message(connection);
@@ -138,7 +138,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_connack(mqtt_connection_t
     return fini_message(connection, MQTT_MSG_TYPE_CONNACK, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_publish(mqtt_connection_t *connection, const char *topic, const char *data,
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_publish(mqtt_connection_t *connection, const char *topic, const char *data,
                                                                int data_length, int qos, int retain, unsigned short *message_id)
 {
     init_message(connection);
@@ -165,7 +165,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_publish(mqtt_connection_t
     return fini_message(connection, MQTT_MSG_TYPE_PUBLISH, 0, qos, retain);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_puback(mqtt_connection_t *connection, unsigned short message_id)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_puback(mqtt_connection_t *connection, unsigned short message_id)
 {
     init_message(connection);
     if (append_message_id(connection, message_id) == 0)
@@ -173,7 +173,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_puback(mqtt_connection_t 
     return fini_message(connection, MQTT_MSG_TYPE_PUBACK, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pubrec(mqtt_connection_t *connection, unsigned short message_id)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_pubrec(mqtt_connection_t *connection, unsigned short message_id)
 {
     init_message(connection);
     if (append_message_id(connection, message_id) == 0)
@@ -181,7 +181,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pubrec(mqtt_connection_t 
     return fini_message(connection, MQTT_MSG_TYPE_PUBREC, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pubrel(mqtt_connection_t *connection, unsigned short message_id)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_pubrel(mqtt_connection_t *connection, unsigned short message_id)
 {
     init_message(connection);
     if (append_message_id(connection, message_id) == 0)
@@ -189,7 +189,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pubrel(mqtt_connection_t 
     return fini_message(connection, MQTT_MSG_TYPE_PUBREL, 0, 1, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pubcomp(mqtt_connection_t *connection, unsigned short message_id)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_pubcomp(mqtt_connection_t *connection, unsigned short message_id)
 {
     init_message(connection);
     if (append_message_id(connection, message_id) == 0)
@@ -197,7 +197,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pubcomp(mqtt_connection_t
     return fini_message(connection, MQTT_MSG_TYPE_PUBCOMP, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_subscribe(mqtt_connection_t *connection, const char *topic, int qos,
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_subscribe(mqtt_connection_t *connection, const char *topic, int qos,
                                                                  unsigned short *message_id)
 {
     init_message(connection);
@@ -218,7 +218,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_subscribe(mqtt_connection
     return fini_message(connection, MQTT_MSG_TYPE_SUBSCRIBE, 0, 1, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_suback(mqtt_connection_t *connection, unsigned char *ret_codes,
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_suback(mqtt_connection_t *connection, unsigned char *ret_codes,
                                                               unsigned char ret_codes_len, unsigned short message_id)
 {
     unsigned char i;
@@ -234,7 +234,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_suback(mqtt_connection_t 
     return fini_message(connection, MQTT_MSG_TYPE_SUBACK, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_unsubscribe(mqtt_connection_t *connection, const char *topic,
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_unsubscribe(mqtt_connection_t *connection, const char *topic,
                                                                    unsigned short *message_id)
 {
     init_message(connection);
@@ -251,7 +251,7 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_unsubscribe(mqtt_connecti
     return fini_message(connection, MQTT_MSG_TYPE_UNSUBSCRIBE, 0, 1, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_unsuback(mqtt_connection_t *connection, unsigned short message_id)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_unsuback(mqtt_connection_t *connection, unsigned short message_id)
 {
     init_message(connection);
 
@@ -261,25 +261,25 @@ MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_unsuback(mqtt_connection_
     return fini_message(connection, MQTT_MSG_TYPE_UNSUBACK, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pingreq(mqtt_connection_t *connection)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_pingreq(mqtt_connection_t *connection)
 {
     init_message(connection);
     return fini_message(connection, MQTT_MSG_TYPE_PINGREQ, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_pingresp(mqtt_connection_t *connection)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_pingresp(mqtt_connection_t *connection)
 {
     init_message(connection);
     return fini_message(connection, MQTT_MSG_TYPE_PINGRESP, 0, 0, 0);
 }
 
-MqttServerMsg::mqtt_message_t *MqttServerMsg::mqtt_msg_disconnect(mqtt_connection_t *connection)
+MqttMsg::mqtt_message_t *MqttMsg::mqtt_msg_disconnect(mqtt_connection_t *connection)
 {
     init_message(connection);
     return fini_message(connection, MQTT_MSG_TYPE_DISCONNECT, 0, 0, 0);
 }
 
-int MqttServerMsg::append_string(mqtt_connection_t *connection, const char *string, int len)
+int MqttMsg::append_string(mqtt_connection_t *connection, const char *string, int len)
 {
     if (connection->message.length + len + 2 > connection->buffer_length)
         return -1;
@@ -292,7 +292,7 @@ int MqttServerMsg::append_string(mqtt_connection_t *connection, const char *stri
     return len + 2;
 }
 
-unsigned short MqttServerMsg::append_message_id(mqtt_connection_t *connection, unsigned short message_id)
+unsigned short MqttMsg::append_message_id(mqtt_connection_t *connection, unsigned short message_id)
 {
     // If message_id is zero then we should assign one, otherwise
     // we'll use the one supplied by the caller
@@ -308,7 +308,7 @@ unsigned short MqttServerMsg::append_message_id(mqtt_connection_t *connection, u
     return message_id;
 }
 
-int MqttServerMsg::init_message(mqtt_connection_t *connection)
+int MqttMsg::init_message(mqtt_connection_t *connection)
 {
     connection->message.length = MQTT_MAX_FIXED_HEADER_SIZE;
     return MQTT_MAX_FIXED_HEADER_SIZE;
@@ -432,67 +432,78 @@ int MqttServerMsg::init_message(mqtt_connection_t *connection)
 //     return (const char *)(buffer + i);
 // }
 
-// unsigned short mqtt_get_id(unsigned char *buffer, unsigned short length)
-// {
-//     if (length < 1)
-//         return 0;
+unsigned short MqttMsg::mqtt_get_id(unsigned char *buffer, unsigned short length)
+{
+    if (length < 1)
+        return 0;
 
-//     switch (mqtt_get_type(buffer))
-//     {
-//     case MQTT_MSG_TYPE_PUBLISH:
-//     {
-//         int i;
-//         int topiclen;
+    switch (mqtt_get_type(buffer))
+    {
+    case MQTT_MSG_TYPE_PUBLISH:
+    {
+        return GetIdFromPublish(buffer, length);
+    }
+    case MQTT_MSG_TYPE_PUBACK:
+    case MQTT_MSG_TYPE_PUBREC:
+    case MQTT_MSG_TYPE_PUBREL:
+    case MQTT_MSG_TYPE_PUBCOMP:
+    case MQTT_MSG_TYPE_SUBACK:
+    case MQTT_MSG_TYPE_UNSUBACK:
+    case MQTT_MSG_TYPE_SUBSCRIBE:
+    case MQTT_MSG_TYPE_UNSUBSCRIBE:
+    {
+        return GetIdFromGeneric(buffer, length);
+    }
 
-//         for (i = 1; i < length; ++i)
-//         {
-//             if ((buffer[i] & 0x80) == 0)
-//             {
-//                 ++i;
-//                 break;
-//             }
-//         }
+    default:
+        return 0;
+    }
+}
 
-//         if (i + 2 >= length)
-//             return 0;
-//         topiclen = buffer[i++] << 8;
-//         topiclen |= buffer[i++];
+unsigned short MqttMsg::GetIdFromPublish(unsigned char *buffer, unsigned short length)
+{
+    int i;
+    int topiclen;
 
-//         if (i + topiclen >= length)
-//             return 0;
-//         i += topiclen;
+    for (i = 1; i < length; ++i)
+    {
+        if ((buffer[i] & 0x80) == 0)
+        {
+            ++i;
+            break;
+        }
+    }
 
-//         if (mqtt_get_qos(buffer) > 0)
-//         {
-//             if (i + 2 >= length)
-//                 return 0;
-//             // i += 2;
-//         }
-//         else
-//         {
-//             return 0;
-//         }
+    if (i + 2 >= length) return 0;
 
-//         return (buffer[i] << 8) | buffer[i + 1];
-//     }
-//     case MQTT_MSG_TYPE_PUBACK:
-//     case MQTT_MSG_TYPE_PUBREC:
-//     case MQTT_MSG_TYPE_PUBREL:
-//     case MQTT_MSG_TYPE_PUBCOMP:
-//     case MQTT_MSG_TYPE_SUBACK:
-//     case MQTT_MSG_TYPE_UNSUBACK:
-//     case MQTT_MSG_TYPE_SUBSCRIBE:
-//     case MQTT_MSG_TYPE_UNSUBSCRIBE:
-//     {
-//         // This requires the remaining length to be encoded in 1 byte,
-//         // which it should be.
-//         if (length >= 4 && (buffer[1] & 0x80) == 0)
-//             return (buffer[2] << 8) | buffer[3];
-//         else
-//             return 0;
-//     }
+    topiclen = buffer[i++] << 8;
+    topiclen |= buffer[i++];
 
-//     default:
-//         return 0;
-//     }
-// }
+    if (i + topiclen >= length) return 0;
+
+    i += topiclen;
+
+    if (mqtt_get_qos(buffer) > 0)
+    {
+        if (i + 2 >= length)
+            return 0;
+        // i += 2;
+    }
+    else
+    {
+        return 0;
+    }
+
+    return (buffer[i] << 8) | buffer[i + 1];
+}
+
+unsigned short MqttMsg::GetIdFromGeneric(unsigned char *buffer, unsigned short length)
+{
+    
+        // This requires the remaining length to be encoded in 1 byte,
+        // which it should be.
+        if (length >= 4 && (buffer[1] & 0x80) == 0)
+            return (buffer[2] << 8) | buffer[3];
+        else
+            return 0;
+}

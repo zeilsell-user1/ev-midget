@@ -23,14 +23,14 @@
 
 #include <string.h>
 #include "defaults.h"
-#include "mqtt_server_topic.h"
+#include "mqtt_topic.h"
 
-MqttServerTopic::MqttServerTopic()
+MqttTopic::MqttTopic()
 {
 	resetTopic();
 }
 
-MqttServerTopic::MqttServerTopic(char const *topic)
+MqttTopic::MqttTopic(char const *topic)
 {
 	this->length = strnlen(topic, MAX_TOPIC_LENGTH);
 
@@ -54,7 +54,7 @@ MqttServerTopic::MqttServerTopic(char const *topic)
  * @return returns false if there is a proboem with the topic string
  */
 
-bool MqttServerTopic::setTopic(char const *topic)
+bool MqttTopic::setTopic(char const *topic)
 {
 	this->length = strnlen(topic, MAX_TOPIC_LENGTH);
 
@@ -80,7 +80,7 @@ bool MqttServerTopic::setTopic(char const *topic)
  * resets the topic to all '\0'
  */
 
-void MqttServerTopic::resetTopic()
+void MqttTopic::resetTopic()
 {
 	memset(this->topic, '\0', MAX_TOPIC_LENGTH);
 	this->length = 0;
@@ -90,7 +90,7 @@ void MqttServerTopic::resetTopic()
  * @brief get the length of the topic
  */
 
-unsigned char MqttServerTopic::getLength()
+unsigned char MqttTopic::getLength()
 {
 	return this->length;
 }
@@ -100,7 +100,7 @@ unsigned char MqttServerTopic::getLength()
  * @return boolean value indicating whether the topic name is valid
  */
 
-bool MqttServerTopic::isValidName() const
+bool MqttTopic::isValidName() const
 {
 	// Topics are checked for length when instantiated so no need to check again
 	//
@@ -220,7 +220,7 @@ bool MqttServerTopic::isValidName() const
  * @return boolean value indicating whether the topic contains a wildcard or not
  */
 
-bool MqttServerTopic::hasWildcards() const
+bool MqttTopic::hasWildcards() const
 {
 	return (strchr(this->topic, '+') != NULL) || (strchr(this->topic, '#') != NULL);
 }
@@ -248,7 +248,7 @@ bool MqttServerTopic::hasWildcards() const
  * @return boolean value indicating whether topic matches wildTopic
  */
 
-bool MqttServerTopic::operator==(MqttServerTopic& other)
+bool MqttTopic::operator==(MqttTopic& other)
 {
 	bool thisHasWildcards = this->hasWildcards();
 	bool thatHasWildcards = other.hasWildcards();
@@ -345,7 +345,7 @@ bool MqttServerTopic::operator==(MqttServerTopic& other)
  * Private methods
 ******************************************************************************/
 
-unsigned char MqttServerTopic::numberOfOccurences(const char *str, const char chr) const
+unsigned char MqttTopic::numberOfOccurences(const char *str, const char chr) const
 {
 	unsigned char count = 0;
 

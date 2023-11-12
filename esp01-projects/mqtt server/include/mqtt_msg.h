@@ -21,15 +21,36 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SERVER_MSG_H
-#define MQTT_SERVER_MSG_H
+#ifndef MQTT_MSG_H
+#define MQTT_MSG_H
 
 #include "defaults.h"
 
 #define MQTT_MAX_FIXED_HEADER_SIZE 3
 
-class MqttServerMsg {
+class MqttMsg {
+  private:
+    unsigned short packetId;
+    unsigned char data[MAX_MSG_LENGTH];
+    unsigned short length;
+    bool dup;
+    unsigned char qos;
+    bool isSent;
+    bool ackNeeded;
+    bool isAcked;
+
+    bool createConnect();
+    bool processConnect();
+
+    unsigned short mqtt_get_id(unsigned char *buffer, unsigned short length);
+    unsigned short GetIdFromPublish(unsigned char *buffer, unsigned short length);
+    unsigned short GetIdFromGeneric(unsigned char *buffer, unsigned short length);
+
   public:
+    MqttMsg();
+    MqttMsg(unsigned char *msg, unsigned short length);
+
+
     enum mqtt_message_type
     {
       MQTT_MSG_TYPE_CONNECT     = 1,
@@ -58,12 +79,6 @@ class MqttServerMsg {
       CONNECTION_REFUSE_NOT_AUTHORIZED
     };
 
-    typedef struct mqtt_message
-    {
-      unsigned char *data;
-      unsigned short length;
-    } mqtt_message_t;
-
     typedef struct mqtt_connection
     {
       mqtt_message_t message;
@@ -72,18 +87,6 @@ class MqttServerMsg {
       unsigned short buffer_length;
     } mqtt_connection_t;
     
-    typedef struct mqtt_connection_info
-    {
-        const char* client_id;
-        char* will_topic;
-        char* will_data;
-        unsigned short will_data_len;
-        unsigned int keepalive;
-        int will_qos;
-        int will_retain;
-        int clean_session;
-    } mqtt_connection_info_t;
-
     enum mqtt_connect_flag
     {
       MQTT_CONNECT_FLAG_USERNAME = 1 << 7,
@@ -156,4 +159,4 @@ class MqttServerMsg {
     
 };
 
-#endif /* MQTT_SERVER_MSG_H */
+#endif /* MQTT_MSG_H */
