@@ -21,48 +21,43 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
-
+#include <string.h>
 #include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_msg.h"
-//#include "espconn.h"
+#include "mqtt_session_list.h"
 
-class MqttSession
+MqttSessionList::MqttSessionList()
 {
-    private:
-        bool sessionValid;
-        TcpSession tcpSession;
-        unsigned char will_qos;
-        int will_retain;
-        int clean_session;
-        //struct espconn *pesp_conn;
-        unsigned char clientId[23];
-        unsigned char IPAddress[4];
-        unsigned long sessionExpiryIntervalTimeout;
-            
-        void WaitForConnect_HandleMsg(MqttMsg msg);
-        void Connected_HandleMsg(MqttMsg msg);
-        void WaitForPubRel_HandleMsg(MqttMsg msg);
-        void Disconnected_HandleMsg(MqttMsg msg);
+    for (int i; i < MAX_SESSIONS; i++)
+    {
+        this->list[i].setSessionFalse();
+    }
+}
 
-        void print_topic(MqttTopic *topic) const;
-        bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
+bool MqttSessionList::isFull()
+{
+    bool sessionValid;
+    int i = 0;
 
-    public:
-    
-        MqttSession();
-        MqttSession(TcpSession tcpSession);
-        void setSessionFalse();
-        bool isSessionValid();
-        
-        void handleTcpConnect(void *args);
-        void handleTcpDisconnect(void *args);
-        void handleTcpMessageSent(void *args);
-        void handleTcpMessageAcknowledged(void *args);
-        void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
-};
+    {
+        sessionValid = this->list[i].isSessionValid();
 
-#endif /* MQTT_SESSION_H */
+    } while ((sessionValid == true) && (i < MAX_SESSIONS));
+
+    return sessionValid;
+}
+
+void MqttSessionList::addSession(TcpSession *tcpSession)
+{
+    bool sessionValid;
+    int i = 0;
+
+    {
+        sessionValid = this->list[i].isSessionValid();
+
+    } while ((sessionValid == true) && (i < MAX_SESSIONS));
+
+    if (sessionValid == false) // the next open session
+    {
+        this->list[i] = *tcpSession;
+    }
+}

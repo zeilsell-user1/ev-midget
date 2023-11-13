@@ -47,24 +47,25 @@ void sessionConnectCb(void *obj, TcpSession *tcpSession)
 MqttServer::MqttServer()
 {
     ip4_addr_set_any(&this->ipAddress);
-    this->port = port;
-    this->tcpServer = NULL;
+    this->port = 0;
 }
 
 MqttServer::MqttServer(ip_addr_t ipAddress, unsigned short port) // client
 {
     this->ipAddress = ipAddress;
     this->port = port;
-    this->tcpServer = TcpServer(this->ipAddress, this->port);
-    this->tcpServer.registerSessionConnect_cb(sessionConnectCb, (void *)this);
+
+    TcpServer& tcpServer = TcpServer::getInstance();
+    tcpServer.startTcpClient(this->ipAddress, this->port, sessionConnectCb, (void *)this);
 }
 
 MqttServer::MqttServer(unsigned short port) // server
 {
     ip4_addr_set_any(&this->ipAddress);
     this->port = port;
-    this->tcpServer = TcpServer(this->port);
-    this->tcpServer.registerSessionConnect_cb(sessionConnectCb, (void *)this);
+    
+    TcpServer& tcpServer = TcpServer::getInstance();
+    tcpServer.startTcpServer(this->port, sessionConnectCb, (void *)this);
 }
 
 void MqttServer::handleTcpConnect(TcpSession *tcpSession)

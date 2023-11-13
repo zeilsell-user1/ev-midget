@@ -25,11 +25,11 @@
 #include "defaults.h"
 #include "tcp_session.h"
 
-void nullCallback1(void *arg)
+void nullCallback1(void *obj, void *arg)
 {
     TCP_ERROR("callback called without initialisation");
 }
-void nullcallback2(void *arg, char *pdata, unsigned short len)
+void nullcallback2(void *obj, void *arg, char *pdata, unsigned short len)
 {
     TCP_ERROR("callback called without initialisation");
 }
@@ -40,46 +40,31 @@ TcpSession::TcpSession()
     //struct espconn *pesp_conn;
     ip4_addr_set_any(&this->ipAddress);
     this->sessionExpiryIntervalTimeout = 0;
-    this->connectedCb = nullCallback1;
     this->disconnectedCb = nullCallback1;
     this->incomingMessageCb = nullcallback2;
     this->messageSentCb = nullCallback1;
     this->messageAcknowledgedCb = nullCallback1;
 }
 
-bool TcpSession::registerSessionConnect_cb(void *cb, void *obj)
+
+bool TcpSession::registerSessionDisconnect_cb(void (*cb)(void *arg, void *obj), void *obj)
 {
-    this->connectedCb = (void (*)(void *arg))cb;
+    this->disconnectedCb = (void (*)(void *, void *))cb;
 }
 
-bool TcpSession::registerSessionDisconnect_cb(void *cb, void *obj)
+bool TcpSession::registerIncomingMessage_cb(void (*cb)(void *arg, char *pdata, unsigned short len, void *obj), void *obj)
 {
-    this->disconnectedCb = (void (*)(void *arg))cb;
+    this->incomingMessageCb = (void (*)(void *, void *, char *, unsigned short))cb;
 }
 
-bool TcpSession::registerIncomingMessage_cb(void *cb, void *obj)
+bool TcpSession::registerMessageSent_cb(void (*cb)(void *arg, void *obj), void *obj)
 {
-    this->incomingMessageCb = (void (*)(void *arg, char *pdata, unsigned short len))cb;
+    this->messageSentCb = (void (*)(void *, void *))cb;
 }
 
-bool TcpSession::registerMessageSent_cb(void *cb, void *obj)
+bool TcpSession::regsiterMessageAcknowledged_cb(void (*cb)(void *arg, void *obj), void *obj)
 {
-    this->messageSentCb = (void (*)(void *arg))cb;
-}
-
-bool TcpSession::regsiterMessageAcknowledged_cb(void *cb, void *obj)
-{
-    this->messageAcknowledgedCb = (void (*)(void *arg))cb;
-}
-
-bool TcpSession::startTcpServer(unsigned short port)
-{
-
-}
-
-bool TcpSession::startTcpClient(ip_addr ipAddress, unsigned short port)
-{
-
+    this->messageAcknowledgedCb = (void (*)(void *, void *))cb;
 }
 
 /*************************************************************************/

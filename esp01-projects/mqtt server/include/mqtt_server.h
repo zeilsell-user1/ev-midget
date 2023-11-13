@@ -43,7 +43,6 @@ class MqttServer
 {
   private:
     MqttSessionList sessionList;
-    TcpServer tcpServer;
     ip_addr_t ipAddress; 
     unsigned short port;
 

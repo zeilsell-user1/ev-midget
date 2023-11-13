@@ -31,51 +31,66 @@
  ******************************************************************************
  */
 
-// void sessionDisconnectCb(void *obj, void *args)
-// {
-//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
-//     mqttServer->handleTcpDisconnect(args);
-// }
+void sessionDisconnectCb(void *args, void *obj)
+{
+    MqttSession *mqttSession = (MqttSession *)(obj);
+    mqttSession->handleTcpDisconnect(args);
+}
 
-// void messageSentCb(void *obj, void *args)
-// {
-//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
-//     mqttServer->handleTcpMessageSent(args);
-// }
+void messageSentCb(void *args, void *obj)
+{
+    MqttSession *mqttSession = (MqttSession *)(obj);
+    mqttSession->handleTcpMessageSent(args);
+}
 
-// void messageAcknowledgedCb(void *obj, void *args)
-// {
-//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
-//     mqttServer->handleTcpMessageAcknowledged(args);
-// }
+void messageAcknowledgedCb(void *args, void *obj)
+{
+    MqttSession *mqttSession = (MqttSession *)(obj);
+    mqttSession->handleTcpMessageAcknowledged(args);
+}
 
-// void incomingMessageCb(void *obj, void *args, char *pdata, unsigned short len)
-// {
-//     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
-//     mqttServer->handleTcpIncomingMessage(args, pdata, len);
-// }
+void incomingMessageCb(void *args, char *pdata, unsigned short len, void *obj)
+{
+    MqttSession *mqttSession = (MqttSession *)(obj);
+    mqttSession->handleTcpIncomingMessage(args, pdata, len);
+}
 
 MqttSession::MqttSession()
 {
-    // this->tcpSession.regsiterSessionDisconnect_cb(sessionDisconnectCb, (void *)this);
-    // this->tcpSession.registerIncomingMessage_cb(incomingMessageCb, (void *)this);
-    // this->tcpSession.registerMessageSent_cb(messageSentCb, (void *)this);
-    // this->tcpSession.regsiterMessageAcknowledged_cb(messageAcknowledgedCb, (void *)this);
+    this->tcpSession.registerSessionDisconnect_cb(sessionDisconnectCb, (void *)this);
+    this->tcpSession.registerIncomingMessage_cb(incomingMessageCb, (void *)this);
+    this->tcpSession.registerMessageSent_cb(messageSentCb, (void *)this);
+    this->tcpSession.regsiterMessageAcknowledged_cb(messageAcknowledgedCb, (void *)this);
 }
 
-// void MqttServer::handleTcpDisconnect(void *args)
+MqttSession::MqttSession(TcpSession tcpSession)
+{
+    this->tcpSession = tcpSession;
+}
+
+void MqttSession::setSessionFalse()
+{
+    this->sessionValid = false;
+}
+
+bool MqttSession::isSessionValid()
+{
+    return this->sessionValid;
+}
+
+// void MqttSession::handleTcpDisconnect(void *args)
 // {
 // }
 
-// void MqttServer::handleTcpMessageSent(void *args)
+// void MqttSession::handleTcpMessageSent(void *args)
 // {
 // }
 
-// void MqttServer::handleTcpMessageAcknowledged(void *args)
+// void MqttSession::handleTcpMessageAcknowledged(void *args)
 // {
 // }
 
-// void MqttServer::handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len)
+// void MqttSession::handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len)
 // {
 // }
 
@@ -191,7 +206,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 
 // #define MINIMUM_SUBSCRIBE_LENGTH 8
 
-// MqttServer::MqttServer(uint16_t portno)
+// MqttSession::MqttSession(uint16_t portno)
 // {
 // 	MQTT_INFO("Starting MQTT server on port %d\r\n", portno);
 
@@ -208,7 +223,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	system_os_task(MQTT_ServerTask, MQTT_SERVER_TASK_PRIO, mqtt_procServerTaskQueue, MQTT_TASK_QUEUE_SIZE);
 // }
 
-// void MqttServer::TcpConnectedCb(void *arg)
+// void MqttSession::TcpConnectedCb(void *arg)
 // {
 // 	struct espconn *pespconn = (struct espconn *)arg;
 // 	MQTT_ClientCon *mqttClientCon;
@@ -247,7 +262,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	os_timer_arm(&mqttClientCon->mqttTimer, 1000, 1);
 // }
 
-// void MqttServer::TcpReceiveCb(void *arg, char *pdata, unsigned short len)
+// void MqttSession::TcpReceiveCb(void *arg, char *pdata, unsigned short len)
 // {
 // 	uint8_t msg_type;
 // 	uint8_t msg_qos;
@@ -340,7 +355,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	}
 // }
 
-// void MqttServer::TcpDisconnectCb(void *arg)
+// void MqttSession::TcpDisconnectCb(void *arg)
 // {
 // 	struct espconn *pCon = (struct espconn *)arg;
 // 	MQTT_ClientCon *clientcon = (MQTT_ClientCon *)pCon->reverse;
@@ -357,7 +372,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	}
 // }
 
-// void MqttServer::TcpSentCb(void *arg)
+// void MqttSession::TcpSentCb(void *arg)
 // {
 // 	struct espconn *pCon = (struct espconn *)arg;
 // 	MQTT_ClientCon *clientcon = (MQTT_ClientCon *)pCon->reverse;
@@ -383,7 +398,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 
 
 
-// void MqttServer::recvTcpConnect( uint8_t msg_type, enum mqtt_connect_flag msg_conn_ret)
+// void MqttSession::recvTcpConnect( uint8_t msg_type, enum mqtt_connect_flag msg_conn_ret)
 // {
 // 	switch (msg_type)
 // 	{
@@ -410,7 +425,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	return;
 // }
 
-// enum mqtt_connect_flag MqttServer::recvMqttConnect()
+// enum mqtt_connect_flag MqttSession::recvMqttConnect()
 // {
 // 	if (clientcon->mqtt_state.message_length < sizeof(struct mqtt_connect_variable_header) + 3)
 // 	{
@@ -548,7 +563,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	return CONNECTION_ACCEPTED;
 // }
 
-// void MqttServer::recvMqttData(uint8_t msg_type)
+// void MqttSession::recvMqttData(uint8_t msg_type)
 // {
 // 	switch (msg_type)
 // 	{
@@ -581,7 +596,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	}
 // }
 
-// void MqttServer::recvMqttSubscribe()
+// void MqttSession::recvMqttSubscribe()
 // {
 // 	uint16_t msg_id;
 // 	uint16_t topic_index = 4;
@@ -650,7 +665,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	find_retainedtopic(topic_buffer, publish_retainedtopic, clientcon);
 // }
 
-// void MqttServer::recvMqttUnsubscribe()
+// void MqttSession::recvMqttUnsubscribe()
 // {
 // 	//uint8_t msg_type;
 // 	//uint8_t msg_qos;
@@ -704,7 +719,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	}
 // }
 
-// void MqttServer::recvMqttPublish()
+// void MqttSession::recvMqttPublish()
 // {
 // 	//uint8_t msg_type;
 // 	//uint8_t msg_qos;
@@ -744,7 +759,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	}
 // }
 
-// void MqttServer::recvMqttPingReq()
+// void MqttSession::recvMqttPingReq()
 // {
 // 	MQTT_INFO("MQTT: receive MQTT_MSG_TYPE_PINGREQ\r\n");
 // 	clientcon->mqtt_state.outbound_message = mqtt_msg_pingresp(&clientcon->mqtt_state.mqtt_connection);
@@ -755,7 +770,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	}
 // }
 
-// void MqttServer::recvMqttDisconnect()
+// void MqttSession::recvMqttDisconnect()
 // {
 // 	MQTT_INFO("MQTT: receive MQTT_MSG_TYPE_DISCONNECT\r\n");
 
@@ -768,7 +783,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	return;
 // }
 
-// void MQttServer::print_topic(topic_entry *topic) const
+// void MqttSession::print_topic(topic_entry *topic) const
 // {
 // 	MQTT_INFO( "MQTT: Client: %s Topic: \"%s\" QoS: %d\r\n", 
 // 	           topic->clientcon->connect_info.client_id, 
@@ -777,7 +792,7 @@ void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
 // 	return;
 // }
 
-// bool MqttServer::publish_topic(topic_entry *topic_e, uint8_t *topic, uint8_t *data, uint16_t data_len) const
+// bool MqttSession::publish_topic(topic_entry *topic_e, uint8_t *topic, uint8_t *data, uint16_t data_len) const
 // {
 // 	MQTT_ClientCon *clientcon = topic_e->clientcon;
 // 	uint16_t message_id = 0;

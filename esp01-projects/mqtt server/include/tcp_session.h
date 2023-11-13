@@ -51,25 +51,20 @@ class TcpSession
         ip_addr_t ipAddress;
         unsigned long sessionExpiryIntervalTimeout;
         
-        void (*connectedCb)(void *arg);
-        void (*disconnectedCb)(void *arg);
-        void (*incomingMessageCb)(void *arg, char *pdata, unsigned short len);
-        void (*messageSentCb)(void *arg);
-        void (*messageAcknowledgedCb)(void *arg);
+        void (*disconnectedCb)(void *obj, void *arg);
+        void (*incomingMessageCb)(void *obj, void *arg, char *pdata, unsigned short len);
+        void (*messageSentCb)(void *obj, void *arg);
+        void (*messageAcknowledgedCb)(void *obj, void *arg);
 
     public:
         TcpSession();
         TcpSession(ip_addr_t ipAddress, unsigned short port); // client
         TcpSession(unsigned short port); // server
 
-        bool registerSessionConnect_cb(void *cb, void *obj);
-        bool registerSessionDisconnect_cb(void *cb, void *obj);
-        bool registerIncomingMessage_cb(void *cb, void *obj);
-        bool registerMessageSent_cb(void *cb, void *obj);
-        bool regsiterMessageAcknowledged_cb(void *cb, void *obj);
-
-        bool startTcpServer(unsigned short port);
-        bool startTcpClient(ip_addr_t ipAddress, unsigned short port);
+        bool registerSessionDisconnect_cb(void (*cb)(void *, void *), void *obj);
+        bool registerIncomingMessage_cb(void (*cb)(void *, char *, unsigned short, void *), void *obj);
+        bool registerMessageSent_cb(void (*cb)(void *, void *), void *obj);
+        bool regsiterMessageAcknowledged_cb(void (*cb)(void *, void *), void *obj);
 };
 
 #endif //TCP_SESSION_H
