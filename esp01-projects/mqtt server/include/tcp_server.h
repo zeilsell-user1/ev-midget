@@ -69,14 +69,16 @@ private:
     ~TcpServer();
     TcpServer(const TcpServer &) = delete;
     TcpServer &operator=(const TcpServer &) = delete;
-    void (*connectedCb)(void *obj, TcpSession *session);
+    void (*connectedServerCb)(void *obj, TcpSession *session);
+    void (*connectedClientCb)(void *obj, TcpSession *session);
 
 public:
     static TcpServer &getInstance();
     bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSession *), void *obj);
     bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession *), void *obj);
 
-    void serverConnectedCb(void *arg);
+    void serverConnectCallback(void *arg);
+    void clientConnectCallback(void *arg);
 };
 
 #endif // TCP_SERVER_H
