@@ -32,10 +32,10 @@
  ******************************************************************************
  */
 
-void sessionConnectCb(void *obj, TcpSession *tcpSession)
+void sessionConnectCb(void *obj, long tcpSessionId)
 {
     MqttServer *mqttServer = static_cast<MqttServer *>(obj);
-    mqttServer->handleTcpConnect(tcpSession);
+    mqttServer->handleTcpConnect(tcpSessionId);
 }
 
 /*
@@ -48,6 +48,13 @@ MqttServer::MqttServer()
 {
     ip4_addr_set_any(&this->ipAddress);
     this->port = 0;
+
+    for (int i = 0; i < MAX_SESSIONS; i++)
+    {
+        this->sessionMapping[i].mappingValid = INVALID;
+        this->sessionMapping[i].mqttSessionId = 0;
+        this->sessionMapping[i].tcpSessionId = 0;
+    }
 }
 
 MqttServer::MqttServer(ip_addr_t ipAddress, unsigned short port) // client
@@ -57,6 +64,13 @@ MqttServer::MqttServer(ip_addr_t ipAddress, unsigned short port) // client
 
     TcpServer& tcpServer = TcpServer::getInstance();
     tcpServer.startTcpClient(this->ipAddress, this->port, sessionConnectCb, (void *)this);
+    
+    for (int i = 0; i < MAX_SESSIONS; i++)
+    {
+        this->sessionMapping[i].mappingValid = INVALID;
+        this->sessionMapping[i].mqttSessionId = 0;
+        this->sessionMapping[i].tcpSessionId = 0;
+    }
 }
 
 MqttServer::MqttServer(unsigned short port) // server
@@ -66,12 +80,33 @@ MqttServer::MqttServer(unsigned short port) // server
     
     TcpServer& tcpServer = TcpServer::getInstance();
     tcpServer.startTcpServer(this->port, sessionConnectCb, (void *)this);
+    
+    for (int i = 0; i < MAX_SESSIONS; i++)
+    {
+        this->sessionMapping[i].mappingValid = INVALID;
+        this->sessionMapping[i].mqttSessionId = 0;
+        this->sessionMapping[i].tcpSessionId = 0;
+    }
 }
 
-void MqttServer::handleTcpConnect(TcpSession *tcpSession)
+void MqttServer::handleTcpConnect(long tcpSessionId)
 {
-    if (this->sessionList.isFull() == false)
+    int i = 0;
+
+    for (i = 0; i < MAX_SESSIONS; i++)
     {
-        this->sessionList.addSession(tcpSession);
+        if (this->sessionMapping[i].mappingValid == false)
+        {
+            break;
+        }
     }
+
+    if (i < MAX_SESSIONS)
+    {
+        this->sessionMapping[i].tcpSessionId = tcpSessionId;
+        this->sessionMapping[i].mqttSessionId = 0;
+        this->sessionMapping[i].mappingValid = TCP_SESSION; 
+    }
+
+    
 }

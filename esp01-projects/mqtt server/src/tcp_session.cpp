@@ -21,9 +21,12 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#include <string.h>
-#include "defaults.h"
 #include "tcp_session.h"
+
+/*******************************************************************************
+ * local null callback used to make sure any bugs are handled correctly. This
+ * is outside of the class so that the callbacks can work across classes
+ *******************************************************************************/
 
 void nullCallback1(void *obj, void *arg)
 {
@@ -34,40 +37,91 @@ void nullcallback2(void *obj, void *arg, char *pdata, unsigned short len)
     TCP_ERROR("callback called without initialisation");
 }
 
+/*
+ ******************************************************************************
+ * Callback functions to receive data and events from ESPCONN library. These
+ * are outside the class so that the ESPCONN library remains indifferent to 
+ * the details of the client calling it.
+ ******************************************************************************
+ */
+
+void localSessionDisconnectCb(void *arg)
+{
+    struct espconn *conn = (struct espconn *)arg;
+
+}
+
+void localIncomingMessageCb(void *arg, char *pdata, unsigned short len)
+{
+}
+
+void localMessageSentCb(void *arg)
+{
+}
+
+/*******************************************************************************
+ * Class Implemenation - public
+ *******************************************************************************/
+
 TcpSession::TcpSession()
 {
     this->sessionValid = false;
-    //struct espconn *pesp_conn;
     ip4_addr_set_any(&this->ipAddress);
     this->sessionExpiryIntervalTimeout = 0;
     this->disconnectedCb = nullCallback1;
     this->incomingMessageCb = nullcallback2;
     this->messageSentCb = nullCallback1;
-    this->messageAcknowledgedCb = nullCallback1;
 }
 
+TcpSession::TcpSession(long sessionId,
+                       enum SessionType type,
+                       enum SessionState state,
+                       ip_addr_t ipAddress, 
+                       unsigned short port, 
+                       espconn serverConn)
+{
+    this->sessionId = sessionId;
+    this->sessionValid = true;
+    this->state = state;
+    this->type = type;
+    ip4_addr_copy(this->ipAddress, ipAddress);
+    this->sessionExpiryIntervalTimeout = 0;
+    this->disconnectedCb = nullCallback1;
+    this->incomingMessageCb = nullcallback2;
+    this->messageSentCb = nullCallback1;
 
-bool TcpSession::registerSessionDisconnect_cb(void (*cb)(void *arg, void *obj), void *obj)
+    espconn_regist_disconcb(&serverConn, localSessionDisconnectCb);
+    espconn_regist_recvcb(&serverConn, localIncomingMessageCb);
+    espconn_regist_sentcb(&serverConn, localMessageSentCb);
+}
+
+long TcpSession::getSessionId()
+{
+    return this->sessionId;
+}
+
+bool TcpSession::isSessionValid()
+{
+    return this->sessionValid;
+}
+
+bool TcpSession::registerSessionDisconnectCb(void (*cb)(void *arg, void *obj), void *obj)
 {
     this->disconnectedCb = (void (*)(void *, void *))cb;
 }
 
-bool TcpSession::registerIncomingMessage_cb(void (*cb)(void *arg, char *pdata, unsigned short len, void *obj), void *obj)
+bool TcpSession::registerIncomingMessageCb(void (*cb)(void *arg, char *pdata, unsigned short len, void *obj), void *obj)
 {
     this->incomingMessageCb = (void (*)(void *, void *, char *, unsigned short))cb;
 }
 
-bool TcpSession::registerMessageSent_cb(void (*cb)(void *arg, void *obj), void *obj)
+bool TcpSession::registerMessageSentCb(void (*cb)(void *arg, void *obj), void *obj)
 {
     this->messageSentCb = (void (*)(void *, void *))cb;
 }
 
-bool TcpSession::regsiterMessageAcknowledged_cb(void (*cb)(void *arg, void *obj), void *obj)
-{
-    this->messageAcknowledgedCb = (void (*)(void *, void *))cb;
-}
 
-/*************************************************************************/
-/*
- * Private Functions
- */
+/*******************************************************************************
+ * Class Implemenation - private
+ *******************************************************************************/
+

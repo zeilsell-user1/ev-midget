@@ -24,31 +24,39 @@
 #include "tcp_server.h"
 
 /*******************************************************************************
- * local null callback used to make sure any bugs are handled correctly. THis
+ * serverConn is required to be valid for the entire life of the TCP server and
+ * so is defined here as a global variable
+ *******************************************************************************/
+
+struct espconn serverConn;
+esp_tcp tcpConfig;
+
+/*******************************************************************************
+ * local null callback used to make sure any bugs are handled correctly. This
  * is outside of the class so that the callbacks can work across classes
  *******************************************************************************/
 
-void nullCallback1(void *obj, TcpSession *tcpSession)
+void nullCallback(void *obj, long tcpSessionId)
 {
     TCP_ERROR("callback called without initialisation");
 }
 
 /*******************************************************************************
  * This callback is used by the ESPCONN software when a connect has been
- * recevied. It is outside the contect of the TcpServer ans so used the
+ * received. It is outside the contect of the TcpServer and so uses the
  * getInstance to get the TcpServer object.
  *******************************************************************************/
 
-void localServerConnectedCb(void *arg)
+void localServerSessionConnectedCb(void *arg)
 {
     TcpServer &tcpServer = TcpServer::getInstance();
-    tcpServer.serverConnectCallback(arg);
+    tcpServer.serverSessionConnected(arg);
 }
 
-void localClientConnectedCb(void *arg)
+void localClientSessionConnectedCb(void *arg)
 {
     TcpServer &tcpServer = TcpServer::getInstance();
-    tcpServer.clientConnectCallback(arg);
+    tcpServer.clientSessionConnected(arg);
 }
 
 /*******************************************************************************
@@ -60,8 +68,14 @@ TcpServer::TcpServer()
     this->status = NOT_STARTED;
     ip4_addr_set_any(&this->ipAddress);
     this->port = 0;
-    this->connectedCb = nullCallback1;
+    this->serverConnectedCb = nullCallback;
+    this->clientConnectedCb = nullCallback;
     this->obj = nullptr;
+
+    for (int i = 0; i < MAX_SESSIONS; i++)
+    {
+        this->tcpSessions[i] = &TcpSession(); // initialise to invalid
+    }
 }
 
 TcpServer::~TcpServer()
@@ -78,27 +92,24 @@ TcpServer &TcpServer::getInstance()
     return instance;
 }
 
-bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSession *), void *obj)
+bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, long), void *obj)
 {
     if (this->status == NOT_STARTED)
     {
-        this->status = SERVER;
         ip4_addr_set_zero(&this->ipAddress); // server mode has the IP address as zero
+
+        this->status = SERVER;
         this->port = port;
-        this->serverConnectCallback = (void (*)(void *, TcpSession *tcpSession))cb;
+        this->serverConnectedCb = (void (*)(void *, long tcpSessionId))cb;
         this->obj = obj; // this is the object that owns the callback
 
         // Set up server configuration
-        this->serverConn.type = ESPCONN_TCP;
-        this->serverConn.state = ESPCONN_NONE;
-        this->serverConn.proto.tcp = &(this->tcpConfig);
-        this->serverConn.proto.tcp->local_port = port;
+        serverConn.type = ESPCONN_TCP;
+        serverConn.state = ESPCONN_NONE;
+        serverConn.proto.tcp = &tcpConfig;
+        serverConn.proto.tcp->local_port = port;
 
-        // Register callback functions
-        espconn_regist_connectcb(&serverConn, localServerConnectedCb);
-        // espconn_regist_recvcb(&serverConn, serverRecvCb);
-        // espconn_regist_disconcb(&serverConn, serverDisconCb);
-
+        espconn_regist_connectcb(&serverConn, localServerSessionConnectedCb);
         espconn_accept(&serverConn); // Enable server
         return true;
     }
@@ -108,23 +119,28 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
     }
 }
 
-bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession *), void *obj)
+bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, long), void *obj)
 {
     if (this->status == NOT_STARTED)
     {
         this->status = CLIENT;
         this->ipAddress = ipAddress;
         this->port = port;
-        this->connectedCb = (void (*)(void *, TcpSession *tcpSession))cb;
+        this->clientConnectedCb = (void (*)(void *, long tcpSessionId))cb;
         this->obj = obj; // this is the object that owns the callback
-        ipaddr_aton(serverIp, &(client->remote_ip));
 
         // Set the server's port
-        client->remote_port = serverPort;
+        serverConn.type = ESPCONN_TCP;
+        serverConn.state = ESPCONN_NONE;
+        serverConn.proto.tcp = &tcpConfig;
+        serverConn.proto.tcp->remote_ip[0] = ip4_addr1(&ipAddress);
+        serverConn.proto.tcp->remote_ip[1] = ip4_addr2(&ipAddress);
+        serverConn.proto.tcp->remote_ip[2] = ip4_addr3(&ipAddress);
+        serverConn.proto.tcp->remote_ip[3] = ip4_addr4(&ipAddress);
+        serverConn.proto.tcp->remote_port = port;
 
-        // Perform the connection
-        espconn_connect(client);
-        espconn_regist_connectcb(&serverConn, localClientConnectedCb);
+        espconn_regist_connectcb(&serverConn, localClientSessionConnectedCb);
+        espconn_connect(&serverConn);
         return true;
     }
     else
@@ -136,12 +152,12 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
 }
 
 /*******************************************************************************
- * callbacks to handle the espconn events
+ * methods to handle the espconn events
  *******************************************************************************/
 
 // Server connection callback
 
-void TcpServer::serverConnectCallback(void *arg)
+void TcpServer::serverSessionConnected(void *arg)
 {
     struct espconn *conn = (struct espconn *)arg;
 
@@ -154,21 +170,49 @@ void TcpServer::serverConnectCallback(void *arg)
                  conn->proto.tcp->remote_ip[2],
                  conn->proto.tcp->remote_ip[3]);
 
-        TcpSession tcpSerssion = tcpSession(TcpSession::SERVER,
-                                            TcpSession::ESPCONN_CONNECT,
-                                            ipAddress,
-                                            (unsigned int)conn->proto.tcp->remote_port);
+        // IMPORTANT
+        // the only way to distinguish between sessions with espconn library is
+        // to use the address of conn. To avoid leaking the espconn structure
+        // outside of the TCP Session and Server classes the address of conn is
+        // converted to a long and recorded as the session ID.
 
-        TcpSession tcpSession = TcpSession(tcpSession);
+        long sessionId = (long)conn;
+
+        TcpSession tcpSession = TcpSession(sessionId,
+                                           TcpSession::SERVER,
+                                           TcpSession::ESPCONN_CONNECT,
+                                           ipAddress,
+                                           (unsigned short)conn->proto.tcp->remote_port,
+                                           serverConn);
+
+        // loop through the session list until an empty slot is found
+
+        int i = 0;
+        bool sessionValid = true;
+
+        for (i = 0; (i < MAX_SESSIONS) && (sessionValid == true); i++)
+        {
+            sessionValid = this->tcpSessions[i]->isSessionValid();
+        }
+
+        if (i < MAX_SESSIONS)
+        {
+            this->tcpSessions[i] = &tcpSession;
+        }
+
         TcpServer &tcpServer = TcpServer::getInstance();
-        tcpServer.connectedServerCb(tcpServer.obj, &tcpSession);
+        tcpServer.serverConnectedCb(tcpServer.obj, sessionId);
     }
 }
 
 // Client connection callback
 
-void TcpServer::clientConnectCallback(void *arg)
+void TcpServer::clientSessionConnected(void *arg)
 {
+    struct espconn *conn = (struct espconn *)arg;
+
+    if ((conn->type == ESPCONN_TCP) && (conn->state == ESPCONN_CONNECT))
+    {
         ip_addr_t ipAddress;
         IP4_ADDR(&ipAddress,
                  conn->proto.tcp->remote_ip[0],
@@ -176,15 +220,38 @@ void TcpServer::clientConnectCallback(void *arg)
                  conn->proto.tcp->remote_ip[2],
                  conn->proto.tcp->remote_ip[3]);
 
-        TcpSession tcpSerssion = tcpSession(TcpSession::CLIENT,
-                                            conn->state,
+        // IMPORTANT
+        // the only way to distinguish between sessions with espconn library is
+        // to use the address of conn. To avoid leaking the espconn structure
+        // outside of the TCP Session and Server classes the address of conn is
+        // converted to a long and recorded as the session ID.
+
+        long sessionId = (long)conn;
+
+        TcpSession tcpSession = TcpSession(sessionId,
+                                            TcpSession::CLIENT,
                                             TcpSession::ESPCONN_CONNECT,
                                             ipAddress,
-                                            (unsigned int)conn->proto.tcp->remote_port);
+                                            (unsigned short)conn->proto.tcp->remote_port,
+                                            serverConn);
 
-        TcpSession tcpSession = TcpSession(tcpSession);
+        // loop through the session list until an empty slot is found
+
+        int i = 0;
+        bool sessionValid = true;
+
+        for (i = 0; (i < MAX_SESSIONS) && (sessionValid == true); i++)
+        {
+            sessionValid = this->tcpSessions[i]->isSessionValid();
+        }
+
+        if (i < MAX_SESSIONS)
+        {
+            this->tcpSessions[i] = &tcpSession;
+        }
+
         TcpServer &tcpServer = TcpServer::getInstance();
-        tcpServer.connectedClientCb(tcpServer.obj, &tcpSession);
+        tcpServer.clientConnectedCb(tcpServer.obj, sessionId);
     }
 }
 
@@ -211,3 +278,6 @@ void TcpServer::clientConnectCallback(void *arg)
 // void serverDisconCb(void *arg) {
 //     os_printf("Client disconnected\n");
 // }
+
+// espconn_regist_recvcb(&serverConn, serverRecvCb);
+// espconn_regist_disconcb(&serverConn, serverDisconCb);

@@ -30,6 +30,10 @@
 		{
 			"name": "DNS server",
 			"path": "esp01-projects/DNS server"
+		},
+		{
+			"name": "mqtt server",
+			"path": "esp01-projects/mqtt server"
 		}
 	],
 	"settings": {

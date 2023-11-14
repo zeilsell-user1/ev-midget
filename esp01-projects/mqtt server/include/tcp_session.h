@@ -26,8 +26,10 @@
 
 #ifdef ESP8266
 #include <lwip/ip.h>
+#include "espconn.h"
 #else
 #include "../test/test_mqtt_server/ip.h"
+#include "../test/test_mqtt_server/espconn.h"
 #endif
 #include "defaults.h"
 
@@ -44,18 +46,6 @@
 
 class TcpSession
 {
-private:
-    bool sessionValid;
-
-    // struct espconn *pesp_conn;
-    ip_addr_t ipAddress;
-    unsigned long sessionExpiryIntervalTimeout;
-
-    void (*disconnectedCb)(void *obj, void *arg);
-    void (*incomingMessageCb)(void *obj, void *arg, char *pdata, unsigned short len);
-    void (*messageSentCb)(void *obj, void *arg);
-    void (*messageAcknowledgedCb)(void *obj, void *arg);
-
 public:
     // Define a structure to hold client-specific information
     struct ClientConfig
@@ -91,15 +81,32 @@ public:
     };
 
     TcpSession();
-    TcpSession(enum SessionType type,
+    TcpSession(long sessionId,
+               enum SessionType type,
                enum SessionState state,
                ip_addr_t ipAddress, 
-               unsigned short port); 
+               unsigned short port,
+               espconn serverConn); 
 
-    bool registerSessionDisconnect_cb(void (*cb)(void *, void *), void *obj);
-    bool registerIncomingMessage_cb(void (*cb)(void *, char *, unsigned short, void *), void *obj);
-    bool registerMessageSent_cb(void (*cb)(void *, void *), void *obj);
-    bool regsiterMessageAcknowledged_cb(void (*cb)(void *, void *), void *obj);
+    bool isSessionValid();
+    long getSessionId();
+
+    bool registerSessionDisconnectCb(void (*cb)(void *, void *), void *obj);
+    bool registerIncomingMessageCb(void (*cb)(void *, char *, unsigned short, void *), void *obj);
+    bool registerMessageSentCb(void (*cb)(void *, void *), void *obj);
+    
+private:
+    bool sessionValid;
+    long sessionId;
+    enum SessionState state;
+    enum SessionType type;
+    ip_addr_t ipAddress;
+    unsigned long sessionExpiryIntervalTimeout;
+
+    void (*disconnectedCb)(void *obj, void *arg);
+    void (*incomingMessageCb)(void *obj, void *arg, char *pdata, unsigned short len);
+    void (*messageSentCb)(void *obj, void *arg);
+
 };
 
 #endif // TCP_SESSION_H

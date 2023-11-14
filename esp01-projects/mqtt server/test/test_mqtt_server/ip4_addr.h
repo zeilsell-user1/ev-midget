@@ -67,7 +67,7 @@ typedef struct ip4_addr ipv4_addr_t;
 #endif
 // PACK_STRUCT_BEGIN
 // struct ip4_addr2 {
-//   PACK_STRUCT_FIELD(u16_t addrw[2]);
+//   PACK_STRUCT_FIELD(unsigned short  addrw[2]);
 // } PACK_STRUCT_STRUCT;
 // PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -118,12 +118,24 @@ struct netif;
 
 #define IP_LOOPBACKNET      127                 /* official! */
 
+#define PP_HTONL(n) \
+  ((((unsigned long)(n) & 0xff) << 24) | \
+   (((unsigned long)(n) & 0xff00) << 8) | \
+   (((unsigned long)(n) & 0xff0000) >> 8) | \
+   (((unsigned long)(n) & 0xff000000) >> 24))
+
+#define LWIP_MAKEU32(a, b, c, d) \
+  ((((unsigned long)(a)) << 24) | \
+   (((unsigned long)(b)) << 16) | \
+   (((unsigned long)(c)) <<  8) | \
+   ((unsigned long)(d)))
+
 /** Set an IP address given by the four byte-parts */
 #define IP4_ADDR(ipaddr, a,b,c,d)  (ipaddr)->addr = PP_HTONL(LWIP_MAKEU32(a,b,c,d))
 
 /** MEMCPY-like copying of IP addresses where addresses are known to be
  * 16-bit-aligned if the port is correctly configured (so a port could define
- * this to copying 2 u16_t's) - no NULL-pointer-checking needed. */
+ * this to copying 2 unsigned short 's) - no NULL-pointer-checking needed. */
 #ifndef IPADDR2_COPY
 #define IPADDR2_COPY(dest, src) SMEMCPY(dest, src, sizeof(ip4_addr_t))
 #endif
@@ -186,10 +198,10 @@ unsigned char ip4_addr_netmask_valid(unsigned long netmask);
   LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
-                      (u16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
-                      (u16_t)((ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0),       \
-                      (u16_t)((ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0),       \
-                      (u16_t)((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
+                      (unsigned short )((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
+                      (unsigned short )((ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0),       \
+                      (unsigned short )((ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0),       \
+                      (unsigned short )((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
 #define ip4_addr_debug_print_val(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       ip4_addr1_16(&(ipaddr)),       \
@@ -198,16 +210,16 @@ unsigned char ip4_addr_netmask_valid(unsigned long netmask);
                       ip4_addr4_16(&(ipaddr)))
 
 /* Get one byte from the 4-byte address */
-#define ip4_addr1(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[0])
-#define ip4_addr2(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[1])
-#define ip4_addr3(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[2])
-#define ip4_addr4(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[3])
-/* These are cast to u16_t, with the intent that they are often arguments
+#define ip4_addr1(ipaddr) (((const unsigned char*)(&(ipaddr)->addr))[0])
+#define ip4_addr2(ipaddr) (((const unsigned char*)(&(ipaddr)->addr))[1])
+#define ip4_addr3(ipaddr) (((const unsigned char*)(&(ipaddr)->addr))[2])
+#define ip4_addr4(ipaddr) (((const unsigned char*)(&(ipaddr)->addr))[3])
+/* These are cast to unsigned short , with the intent that they are often arguments
  * to printf using the U16_F format from cc.h. */
-#define ip4_addr1_16(ipaddr) ((u16_t)ip4_addr1(ipaddr))
-#define ip4_addr2_16(ipaddr) ((u16_t)ip4_addr2(ipaddr))
-#define ip4_addr3_16(ipaddr) ((u16_t)ip4_addr3(ipaddr))
-#define ip4_addr4_16(ipaddr) ((u16_t)ip4_addr4(ipaddr))
+#define ip4_addr1_16(ipaddr) ((unsigned short )ip4_addr1(ipaddr))
+#define ip4_addr2_16(ipaddr) ((unsigned short )ip4_addr2(ipaddr))
+#define ip4_addr3_16(ipaddr) ((unsigned short )ip4_addr3(ipaddr))
+#define ip4_addr4_16(ipaddr) ((unsigned short )ip4_addr4(ipaddr))
 
 #define IP4ADDR_STRLEN_MAX  16
 

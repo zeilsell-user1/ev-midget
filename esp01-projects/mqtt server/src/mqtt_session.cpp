@@ -78,6 +78,16 @@ bool MqttSession::isSessionValid()
     return this->sessionValid;
 }
 
+long MqttSession::getTcpSessionId()
+{
+    this->tcpSession.getSessionId();
+}
+
+TcpSession MqttSession::getTcpSession()
+{
+    return this->tcpSession;
+}
+
 // void MqttSession::handleTcpDisconnect(void *args)
 // {
 // }

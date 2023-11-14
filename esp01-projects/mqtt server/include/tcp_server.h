@@ -52,7 +52,8 @@
 class TcpServer
 {
 private:
-    enum ServerType {
+    enum ServerType
+    {
         NOT_STARTED,
         CLIENT,
         SERVER
@@ -61,24 +62,24 @@ private:
     ServerType status;
     ip_addr_t ipAddress;
     unsigned short port;
-    struct espconn serverConn;
-    esp_tcp tcpConfig;
-    void *obj; // the callback object
+    TcpSession *tcpSessions[MAX_SESSIONS];
+    void *obj; // the callback object which is passed to the callback
+
+    void (*serverConnectedCb)(void *obj, long tcpSessionId);
+    void (*clientConnectedCb)(void *obj, long tcpSessionId);
 
     TcpServer();
     ~TcpServer();
     TcpServer(const TcpServer &) = delete;
     TcpServer &operator=(const TcpServer &) = delete;
-    void (*connectedServerCb)(void *obj, TcpSession *session);
-    void (*connectedClientCb)(void *obj, TcpSession *session);
 
 public:
     static TcpServer &getInstance();
-    bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSession *), void *obj);
-    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession *), void *obj);
 
-    void serverConnectCallback(void *arg);
-    void clientConnectCallback(void *arg);
+    bool startTcpServer(unsigned short port, void (*cb)(void *, long), void *obj);
+    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, long), void *obj);
+    void serverSessionConnected(void *arg);
+    void clientSessionConnected(void *arg);
 };
 
 #endif // TCP_SERVER_H
