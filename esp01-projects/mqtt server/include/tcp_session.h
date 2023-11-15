@@ -24,6 +24,7 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
+#include <cstdint>
 #ifdef ESP8266
 #include <lwip/ip.h>
 #include "espconn.h"
@@ -81,7 +82,7 @@ public:
     };
 
     TcpSession();
-    TcpSession(long sessionId,
+    TcpSession(uintptr_t sessionId,
                enum SessionType type,
                enum SessionState state,
                ip_addr_t ipAddress, 
@@ -89,15 +90,15 @@ public:
                espconn serverConn); 
 
     bool isSessionValid();
-    long getSessionId();
+    uintptr_t getSessionId();
 
-    bool registerSessionDisconnectCb(void (*cb)(void *, void *), void *obj);
-    bool registerIncomingMessageCb(void (*cb)(void *, char *, unsigned short, void *), void *obj);
-    bool registerMessageSentCb(void (*cb)(void *, void *), void *obj);
+    void registerSessionDisconnectCb(void (*cb)(void *, void *), void *obj);
+    void registerIncomingMessageCb(void (*cb)(void *, char *, unsigned short, void *), void *obj);
+    void registerMessageSentCb(void (*cb)(void *, void *), void *obj);
     
 private:
     bool sessionValid;
-    long sessionId;
+    uintptr_t sessionId;
     enum SessionState state;
     enum SessionType type;
     ip_addr_t ipAddress;

@@ -43,29 +43,28 @@ void messageSentCb(void *args, void *obj)
     mqttSession->handleTcpMessageSent(args);
 }
 
-void messageAcknowledgedCb(void *args, void *obj)
-{
-    MqttSession *mqttSession = (MqttSession *)(obj);
-    mqttSession->handleTcpMessageAcknowledged(args);
-}
-
 void incomingMessageCb(void *args, char *pdata, unsigned short len, void *obj)
 {
     MqttSession *mqttSession = (MqttSession *)(obj);
     mqttSession->handleTcpIncomingMessage(args, pdata, len);
 }
 
+/*
+ ******************************************************************************
+ * Public methods
+ ******************************************************************************
+ */
+
 MqttSession::MqttSession()
 {
-    this->tcpSession.registerSessionDisconnect_cb(sessionDisconnectCb, (void *)this);
-    this->tcpSession.registerIncomingMessage_cb(incomingMessageCb, (void *)this);
-    this->tcpSession.registerMessageSent_cb(messageSentCb, (void *)this);
-    this->tcpSession.regsiterMessageAcknowledged_cb(messageAcknowledgedCb, (void *)this);
 }
 
-MqttSession::MqttSession(TcpSession tcpSession)
+MqttSession::MqttSession(std::shared_ptr<TcpSession> tcpSession)
 {
     this->tcpSession = tcpSession;
+    tcpSession->registerSessionDisconnectCb(sessionDisconnectCb, (void *)this);
+    tcpSession->registerIncomingMessageCb(incomingMessageCb, (void *)this);
+    tcpSession->registerMessageSentCb(messageSentCb, (void *)this);
 }
 
 void MqttSession::setSessionFalse()
@@ -78,31 +77,34 @@ bool MqttSession::isSessionValid()
     return this->sessionValid;
 }
 
-long MqttSession::getTcpSessionId()
-{
-    this->tcpSession.getSessionId();
-}
-
-TcpSession MqttSession::getTcpSession()
+std::shared_ptr<TcpSession> MqttSession::getTcpSession()
 {
     return this->tcpSession;
 }
 
-// void MqttSession::handleTcpDisconnect(void *args)
-// {
-// }
+/*
+ * ****************************************************************************
+ * Methods used to handle the events from the TCP session
+ * ****************************************************************************
+ */
 
-// void MqttSession::handleTcpMessageSent(void *args)
-// {
-// }
+void MqttSession::handleTcpDisconnect(void *args)
+{
+}
 
-// void MqttSession::handleTcpMessageAcknowledged(void *args)
-// {
-// }
+void MqttSession::handleTcpMessageSent(void *args)
+{
+}
 
-// void MqttSession::handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len)
-// {
-// }
+void MqttSession::handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len)
+{
+}
+
+/*
+ * ****************************************************************************
+ * MQTT Session State MAchine
+ * ****************************************************************************
+ */
 
 // State Machine:
 

@@ -24,6 +24,8 @@
 #ifndef _MQTT_SERVER_H_
 #define _MQTT_SERVER_H_
 
+#include <memory>
+
 #ifdef ESP8266
 #include <lwip/ip.h>
 #else
@@ -31,8 +33,7 @@
 #endif
 
 #include "tcp_server.h"
-#include "mqtt_msg.h"
-#include "mqtt_topic.h"
+#include "mqtt_session.h"
 
 // The MQTT Server can run as either the client or the server. It provides
 // the managment of TCP and MQTT connections, processes the received
@@ -44,13 +45,26 @@ public:
   MqttServer(ip_addr_t ipAddress, unsigned short port); // client
   MqttServer(unsigned short portno);                    // server
 
-  void handleTcpConnect(long tcpSessionId);
+  void handleTcpSessionConnect(std::shared_ptr<TcpSession> tcpSession);
 
-  // state machine for the MQTT session
-  void WaitForConnect_HandleMsg(MqttMsg msg);
-  void Connected_HandleMsg(MqttMsg msg);
-  void WaitForPubRel_HandleMsg(MqttMsg msg);
-  void Disconnected_HandleMsg(MqttMsg msg);
+private:
+  struct MapSessions
+  {
+    bool mappingValid;
+    std::shared_ptr<TcpSession> tcpSession;
+    std::unique_ptr<MqttSession> mqttSession;
+  };
+
+  MapSessions sessionMapping[MAX_SESSIONS];
+  ip_addr_t ipAddress;
+  unsigned short port;
+};
+
+#endif /* _MQTT_SERVER_H_ */
+
+
+// #include "mqtt_msg.h"
+// #include "mqtt_topic.h"
 
   // uint16_t MQTT_server_countClientCon();
   // char *MQTT_server_getClientId(uint16_t index);
@@ -63,25 +77,3 @@ public:
   // bool MQTT_local_publish(uint8_t *topic, uint8_t *data, uint16_t data_length, uint8_t qos, uint8_t retain);
   // bool MQTT_local_subscribe(uint8_t *topic, uint8_t qos);
   // bool MQTT_local_unsubscribe(uint8_t *topic);
-
-private:
-
-  enum MappingStatus
-  {
-    INVALID,
-    TCP_SESSION,
-    TCP_MQTT_SESSION
-  }
-  struct MapSessions
-  {
-    MappingStatus mappingValid;
-    long tcpSessionId;
-    long mqttSessionId;
-  }
-
-  struct MapSessions sessionMapping[MAX_SESSIONS];
-  ip_addr_t ipAddress;
-  unsigned short port;
-};
-
-#endif /* _MQTT_SERVER_H_ */

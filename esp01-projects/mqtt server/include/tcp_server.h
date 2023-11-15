@@ -24,8 +24,7 @@
 #ifndef TCP_SERVER_H
 #define TCP_SERVER_H
 
-#include <iostream>
-#include <mutex>
+#include <memory>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -62,11 +61,11 @@ private:
     ServerType status;
     ip_addr_t ipAddress;
     unsigned short port;
-    TcpSession *tcpSessions[MAX_SESSIONS];
-    void *obj; // the callback object which is passed to the callback
+    std::shared_ptr<TcpSession> tcpSessions[MAX_SESSIONS];
+    void *ownerObj; // the iupper layer object that owns the callbacks
 
-    void (*serverConnectedCb)(void *obj, long tcpSessionId);
-    void (*clientConnectedCb)(void *obj, long tcpSessionId);
+    void (*serverConnectedCb)(void *obj, std::shared_ptr<TcpSession> tcpSession);
+    void (*clientConnectedCb)(void *obj, std::shared_ptr<TcpSession> tcpSession);
 
     TcpServer();
     ~TcpServer();
@@ -76,8 +75,8 @@ private:
 public:
     static TcpServer &getInstance();
 
-    bool startTcpServer(unsigned short port, void (*cb)(void *, long), void *obj);
-    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, long), void *obj);
+    bool startTcpServer(unsigned short port, void (*cb)(void *, std::shared_ptr<TcpSession>), void *obj);
+    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, std::shared_ptr<TcpSession>), void *obj);
     void serverSessionConnected(void *arg);
     void clientSessionConnected(void *arg);
 };

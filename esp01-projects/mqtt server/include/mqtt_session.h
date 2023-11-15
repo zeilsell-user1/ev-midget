@@ -24,31 +24,39 @@
 #ifndef MQTT_SESSION_H
 #define MQTT_SESSION_H
 
+#include <memory>
+
 #include "defaults.h"
 #include "tcp_session.h"
 #include "mqtt_topic.h"
 #include "mqtt_msg.h"
-// #include "espconn.h"
 
 class MqttSession
 {
-private:
-    struct MqttTcpSessionMapping
-    {
-        long tcpSessionId;
-        long mqttSessionId;
-    };
+public:
+    MqttSession();
+    MqttSession(std::shared_ptr<TcpSession> tcpSession);
+    void setSessionFalse();
+    bool isSessionValid();
+    std::shared_ptr<TcpSession> getTcpSession();
 
+    void handleTcpConnect(void *args);
+    void handleTcpDisconnect(void *args);
+    void handleTcpMessageSent(void *args);
+    void handleTcpMessageAcknowledged(void *args);
+    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+
+private:
     bool sessionValid;
-    long tcpSessionId;
+    std::shared_ptr<TcpSession> tcpSession;
     unsigned char will_qos;
     int will_retain;
     int clean_session;
-    // struct espconn *pesp_conn;
     unsigned char clientId[23];
     unsigned char IPAddress[4];
     unsigned long sessionExpiryIntervalTimeout;
 
+  // state machine for the MQTT session
     void WaitForConnect_HandleMsg(MqttMsg msg);
     void Connected_HandleMsg(MqttMsg msg);
     void WaitForPubRel_HandleMsg(MqttMsg msg);
@@ -57,19 +65,6 @@ private:
     void print_topic(MqttTopic *topic) const;
     bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
 
-public:
-    MqttSession();
-    MqttSession(TcpSession tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    long getTcpSessionId();
-    TcpSession getTcpSession();
-
-    void handleTcpConnect(void *args);
-    void handleTcpDisconnect(void *args);
-    void handleTcpMessageSent(void *args);
-    void handleTcpMessageAcknowledged(void *args);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
 };
 
 #endif /* MQTT_SESSION_H */

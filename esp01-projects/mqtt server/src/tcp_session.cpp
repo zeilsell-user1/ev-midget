@@ -73,7 +73,7 @@ TcpSession::TcpSession()
     this->messageSentCb = nullCallback1;
 }
 
-TcpSession::TcpSession(long sessionId,
+TcpSession::TcpSession(uintptr_t sessionId,
                        enum SessionType type,
                        enum SessionState state,
                        ip_addr_t ipAddress, 
@@ -95,7 +95,7 @@ TcpSession::TcpSession(long sessionId,
     espconn_regist_sentcb(&serverConn, localMessageSentCb);
 }
 
-long TcpSession::getSessionId()
+uintptr_t TcpSession::getSessionId()
 {
     return this->sessionId;
 }
@@ -105,17 +105,17 @@ bool TcpSession::isSessionValid()
     return this->sessionValid;
 }
 
-bool TcpSession::registerSessionDisconnectCb(void (*cb)(void *arg, void *obj), void *obj)
+void TcpSession::registerSessionDisconnectCb(void (*cb)(void *arg, void *obj), void *obj)
 {
     this->disconnectedCb = (void (*)(void *, void *))cb;
 }
 
-bool TcpSession::registerIncomingMessageCb(void (*cb)(void *arg, char *pdata, unsigned short len, void *obj), void *obj)
+void TcpSession::registerIncomingMessageCb(void (*cb)(void *arg, char *pdata, unsigned short len, void *obj), void *obj)
 {
     this->incomingMessageCb = (void (*)(void *, void *, char *, unsigned short))cb;
 }
 
-bool TcpSession::registerMessageSentCb(void (*cb)(void *arg, void *obj), void *obj)
+void TcpSession::registerMessageSentCb(void (*cb)(void *arg, void *obj), void *obj)
 {
     this->messageSentCb = (void (*)(void *, void *))cb;
 }
