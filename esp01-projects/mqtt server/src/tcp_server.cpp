@@ -28,9 +28,6 @@
  * so is defined here as a global variable
  *******************************************************************************/
 
-struct espconn serverConn;
-esp_tcp tcpConfig;
-
 /*******************************************************************************
  * A dummy callback used in case the upper layer has not defined a real
  * callback. This makes sure any bugs are handled correctly. This callback
@@ -46,18 +43,21 @@ void nullCallback(void *obj, std::shared_ptr<TcpSession> tcpSession)
  * This callback is used by the ESPCONN software when a connect has been
  * received. It is outside the contect of the TcpServer and so uses the
  * getInstance to get the TcpServer object.
+ *
+ * Currenlty there is no difference bwetween a client session and an server
+ * session so they both call the same handle for sessionConnected
  *******************************************************************************/
 
 void espconnServerSessionConnectedCb(void *arg)
 {
     TcpServer &tcpServer = TcpServer::getInstance();
-    tcpServer.serverSessionConnected(arg);
+    tcpServer.sessionConnected(arg);
 }
 
 void espconnClientSessionConnectedCb(void *arg)
 {
     TcpServer &tcpServer = TcpServer::getInstance();
-    tcpServer.clientSessionConnected(arg);
+    tcpServer.sessionConnected(arg);
 }
 
 /*******************************************************************************
@@ -66,17 +66,11 @@ void espconnClientSessionConnectedCb(void *arg)
 
 TcpServer::TcpServer()
 {
-    this->status = NOT_STARTED;
     ip4_addr_set_zero(&this->ipAddress);
     this->port = 0;
     this->serverConnectedCb = nullCallback;
     this->clientConnectedCb = nullCallback;
     this->ownerObj = nullptr; // no owner object
-
-    for (int i = 0; i < MAX_SESSIONS; i++)
-    {
-        this->tcpSessions[i] = std::make_shared<TcpSession>();
-    }
 }
 
 TcpServer::~TcpServer()
@@ -93,63 +87,93 @@ TcpServer &TcpServer::getInstance()
     return instance;
 }
 
-bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, std::shared_ptr<TcpSession>), void *obj)
+bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessionPtr), void *ownerObj)
 {
-    if (this->status == NOT_STARTED)
+    // TODO One server listening on this port 
+
+    ip4_addr_set_zero(&this->ipAddress); // server mode has the IP address as zero
+
+    this->port = port;
+    this->serverConnectedCb = (void (*)(void *, TcpSessionPtr))cb;
+    this->ownerObj = ownerObj; // this is the object that owns the callback
+
+    // Set up server configuration
+    serverConn.type = ESPCONN_TCP;
+    serverConn.state = ESPCONN_NONE;
+    serverConn.proto.tcp = &tcpConfig;
+    serverConn.proto.tcp->local_port = port;
+
+    espconn_regist_connectcb(&serverConn, espconnServerSessionConnectedCb);
+    // TODO espconn_regist_reconcb(&serverConn, espconnClientSessionReconnectedCb);
+
+    signed char rc = espconn_accept(&serverConn); // Enable server
+
+    switch (rc)
     {
-        ip4_addr_set_zero(&this->ipAddress); // server mode has the IP address as zero
-
-        this->status = SERVER;
-        this->port = port;
-        this->serverConnectedCb = (void (*)(void *, std::shared_ptr<TcpSession>))cb;
-        this->ownerObj = obj; // this is the object that owns the callback
-
-        // Set up server configuration
-        serverConn.type = ESPCONN_TCP;
-        serverConn.state = ESPCONN_NONE;
-        serverConn.proto.tcp = &tcpConfig;
-        serverConn.proto.tcp->local_port = port;
-
-        espconn_regist_connectcb(&serverConn, espconnServerSessionConnectedCb);
-        espconn_accept(&serverConn); // Enable server
+    case 0:
+        MQTT_INFO("espconn_connect returned success");
         return true;
-    }
-    else
-    {
+    case ESPCONN_MEM:
+        MQTT_WARNING("espconn_connect returned ESPCONN_MEM");
+        return false;
+    case ESPCONN_ISCONN:
+        MQTT_WARNING("espconn_connect returned MQTT_WARNING");
+        return false;
+    case ESPCONN_ARG:
+        MQTT_WARNING("espconn_connect returned MQTT_WARNING");
+        return false;
+    default:
+        MQTT_WARNING("espconn_connect returned %d", rc);
         return false;
     }
 }
 
-bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, std::shared_ptr<TcpSession>), void *obj)
+bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSessionPtr), void *ownerObj)
 {
-    if (this->status == NOT_STARTED)
+    
+    // TODO One client connecting on this port and IP address combination
+    
+    this->ipAddress = ipAddress;
+    this->port = port;
+    this->serverConnectedCb = (void (*)(void *, std::shared_ptr<TcpSession>))cb;
+    this->ownerObj = ownerObj; // this is the object that owns the callback
+
+    // Set the server's port
+    serverConn.type = ESPCONN_TCP;
+    serverConn.state = ESPCONN_NONE;
+    serverConn.proto.tcp = &tcpConfig;
+    serverConn.proto.tcp->remote_ip[0] = ip4_addr1(&ipAddress);
+    serverConn.proto.tcp->remote_ip[1] = ip4_addr2(&ipAddress);
+    serverConn.proto.tcp->remote_ip[2] = ip4_addr3(&ipAddress);
+    serverConn.proto.tcp->remote_ip[3] = ip4_addr4(&ipAddress);
+    serverConn.proto.tcp->remote_port = port;
+
+    espconn_regist_connectcb(&serverConn, espconnClientSessionConnectedCb);
+    // TODO espconn_regist_reconcb(&serverConn, espconnClientSessionReconnectedCb);
+
+    signed char rc = espconn_connect(&serverConn);
+
+    switch (rc)
     {
-        this->status = CLIENT;
-        this->ipAddress = ipAddress;
-        this->port = port;
-        this->serverConnectedCb = (void (*)(void *, std::shared_ptr<TcpSession>))cb;
-        this->ownerObj = obj; // this is the object that owns the callback
-
-        // Set the server's port
-        serverConn.type = ESPCONN_TCP;
-        serverConn.state = ESPCONN_NONE;
-        serverConn.proto.tcp = &tcpConfig;
-        serverConn.proto.tcp->remote_ip[0] = ip4_addr1(&ipAddress);
-        serverConn.proto.tcp->remote_ip[1] = ip4_addr2(&ipAddress);
-        serverConn.proto.tcp->remote_ip[2] = ip4_addr3(&ipAddress);
-        serverConn.proto.tcp->remote_ip[3] = ip4_addr4(&ipAddress);
-        serverConn.proto.tcp->remote_port = port;
-
-        espconn_regist_connectcb(&serverConn, espconnClientSessionConnectedCb);
-        espconn_connect(&serverConn);
+    case 0:
+        MQTT_INFO("espconn_connect returned success");
         return true;
-    }
-    else
-    {
+    case ESPCONN_RTE:
+        MQTT_WARNING("espconn_connect returned ESPCONN_RTE");
+        return false;
+    case ESPCONN_MEM:
+        MQTT_WARNING("espconn_connect returned ESPCONN_MEM");
+        return false;
+    case ESPCONN_ISCONN:
+        MQTT_WARNING("espconn_connect returned MQTT_WARNING");
+        return false;
+    case ESPCONN_ARG:
+        MQTT_WARNING("espconn_connect returned MQTT_WARNING");
+        return false;
+    default:
+        MQTT_WARNING("espconn_connect returned %d", rc);
         return false;
     }
-
-    // TODO create the active session to IP and port
 }
 
 /*******************************************************************************
@@ -162,111 +186,72 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
 // session is then passed to the owning object via the already-registered
 // callback.
 
-void TcpServer::serverSessionConnected(void *arg)
+void TcpServer::sessionConnected(void *arg)
 {
     struct espconn *conn = (struct espconn *)arg;
 
     if ((conn->type == ESPCONN_TCP) && (conn->state == ESPCONN_CONNECT))
     {
-        ip_addr_t ipAddress;
-        IP4_ADDR(&ipAddress,
-                 conn->proto.tcp->remote_ip[0],
-                 conn->proto.tcp->remote_ip[1],
-                 conn->proto.tcp->remote_ip[2],
-                 conn->proto.tcp->remote_ip[3]);
+        TcpSessionPtr tcpSession = std::make_shared<TcpSession>(TcpSession::ESPCONN_CONNECT,
+                                                                TcpSession::convertIpAddress(conn->proto.tcp->remote_ip),
+                                                                (unsigned short)conn->proto.tcp->remote_port,
+                                                                conn);
 
-        // IMPORTANT
-        // the only way to distinguish between sessions with espconn library is
-        // to use the address of conn. To avoid leaking the espconn structure
-        // outside of the TCP Session and Server classes the address of conn is
-        // converted to a uintptr_t and recorded as the session ID.
+        TcpSession::SessionId sessionId = tcpSession->getSessionId();
 
-        uintptr_t sessionId = reinterpret_cast<uintptr_t>(conn);
-
-        std::shared_ptr<TcpSession> tcpSession = std::make_shared<TcpSession>(sessionId,
-                                                                              TcpSession::SERVER,
-                                                                              TcpSession::ESPCONN_CONNECT,
-                                                                              ipAddress,
-                                                                              (unsigned short)conn->proto.tcp->remote_port,
-                                                                              serverConn);
-
-        // loop through the session list until an empty slot is found
-
-        int i = 0;
-        bool sessionValid = true;
-
-        for (i = 0; (i < MAX_SESSIONS) && (sessionValid == true); i++)
+        if (!this->addSession(sessionId, tcpSession))
         {
-            sessionValid = this->tcpSessions[i]->isSessionValid();
-        }
-
-        if (i < MAX_SESSIONS)
-        {
-            // have space for a new session so store it callback the owner object
-            this->tcpSessions[i] = tcpSession;
-            this->serverConnectedCb(this->ownerObj, tcpSession);
-        }
-        else
-        {
-            // over the number of allowed sessions.
-            // TODO Kill the ESPCONN session
+            espconn_abort(conn); // couldn't add session so abort the TCP session
         }
     }
 }
 
-// Client connection callback
-
-void TcpServer::clientSessionConnected(void *arg)
+bool TcpServer::addSession(TcpSession::SessionId sessionId, const TcpSessionPtr &session)
 {
-    struct espconn *conn = (struct espconn *)arg;
-
-    if ((conn->type == ESPCONN_TCP) && (conn->state == ESPCONN_CONNECT))
+    // Check if the identifier is already in use
+    if (tcpSessions.find(sessionId) == tcpSessions.end())
     {
-        ip_addr_t ipAddress;
-        IP4_ADDR(&ipAddress,
-                 conn->proto.tcp->remote_ip[0],
-                 conn->proto.tcp->remote_ip[1],
-                 conn->proto.tcp->remote_ip[2],
-                 conn->proto.tcp->remote_ip[3]);
-
-        // IMPORTANT
-        // the only way to distinguish between sessions with espconn library is
-        // to use the address of conn. To avoid leaking the espconn structure
-        // outside of the TCP Session and Server classes the address of conn is
-        // converted to a uintptr_t and recorded as the session ID.
-
-        uintptr_t sessionId = reinterpret_cast<uintptr_t>(conn);
-
-        std::shared_ptr<TcpSession> tcpSession = std::make_shared<TcpSession>(sessionId,
-                                                                              TcpSession::SERVER,
-                                                                              TcpSession::ESPCONN_CONNECT,
-                                                                              ipAddress,
-                                                                              (unsigned short)conn->proto.tcp->remote_port,
-                                                                              serverConn);
-
-        // loop through the session list until an empty slot is found
-
-        int i = 0;
-        bool sessionValid = true;
-
-        for (i = 0; (i < MAX_SESSIONS) && (sessionValid == true); i++)
+        if (tcpSessions.size() < MAX_TCP_SESSIONS)
         {
-            sessionValid = this->tcpSessions[i]->isSessionValid();
-        }
-
-        // A client may connect to multiple servers
-
-        if (i < MAX_SESSIONS)
-        {
-            // have space for a new session so store it callback the owner object
-            this->tcpSessions[i] = tcpSession;
-            this->serverConnectedCb(this->ownerObj, tcpSession);
+            tcpSessions[sessionId] = session;
+            MQTT_INFO("added session");
+            return true;
         }
         else
         {
-            // over the number of allowed sessions.
-            // TODO Kill the ESPCONN session
+            MQTT_INFO("too many sessions");
+            return false;
         }
+    }
+
+    MQTT_INFO("session already in the array");
+    return true;
+}
+
+void TcpServer::removeSession(TcpSession::SessionId sessionId)
+{
+    auto it = tcpSessions.find(sessionId);
+    if (it != tcpSessions.end())
+    {
+        tcpSessions.erase(it);
+        MQTT_INFO("deleted session");
+    }
+    else
+    {
+        MQTT_INFO("session not found in the map");
+    }
+}
+
+TcpServer::TcpSessionPtr TcpServer::getSession(TcpSession::SessionId sessionId)
+{
+    auto it = tcpSessions.find(sessionId);
+    if (it != tcpSessions.end())
+    {
+        return it->second;
+    }
+    else
+    {
+        return nullptr;
     }
 }
 

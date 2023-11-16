@@ -62,9 +62,10 @@ MqttSession::MqttSession()
 MqttSession::MqttSession(std::shared_ptr<TcpSession> tcpSession)
 {
     this->tcpSession = tcpSession;
-    tcpSession->registerSessionDisconnectCb(sessionDisconnectCb, (void *)this);
-    tcpSession->registerIncomingMessageCb(incomingMessageCb, (void *)this);
-    tcpSession->registerMessageSentCb(messageSentCb, (void *)this);
+    tcpSession->registerSessionCbListener((void *)this);
+    tcpSession->registerSessionDisconnectCb(sessionDisconnectCb);
+    tcpSession->registerIncomingMessageCb(incomingMessageCb);
+    tcpSession->registerMessageSentCb(messageSentCb);
 }
 
 void MqttSession::setSessionFalse()
@@ -88,11 +89,12 @@ std::shared_ptr<TcpSession> MqttSession::getTcpSession()
  * ****************************************************************************
  */
 
-void MqttSession::handleTcpDisconnect(void *args)
+void MqttSession::handleTcpDisconnect(void *arg)
 {
+
 }
 
-void MqttSession::handleTcpMessageSent(void *args)
+void MqttSession::handleTcpMessageSent(void *arg)
 {
 }
 

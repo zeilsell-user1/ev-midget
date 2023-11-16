@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023 George Consultants Ltd.
+ * Copyright (c) 2023 George Consultant Ltd.
  * richard.john.george.3@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -21,48 +21,25 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
+// user tasks are used by the Esprossif ESPCON Non-OS SDK. 
+// User tasks can be classified according to three priority levels: 0, 1, 2. 
+// Priority level has the following order: 2>1>0. Non-OS SDK can only support 
+// up to three tasks at a time. One priority level for one task.
+//
+// User tasks are normally used when a function cannot be called directly. To 
+// create a user task, please refer to the API description of system_os_task() 
+// in this document. For example, espconn_disconnect() API may not be called 
+// from within an espconncallback, therefore a user task must be created within 
+// the espconn callback to execute espconn_disconnect 
 
-#include <memory>
+#ifndef USER_TASK_PRIO_0
+#define USER_TASK_PRIO_0 0
+#endif
 
-#include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_msg.h"
+#ifndef USER_TASK_PRIO_1
+#define USER_TASK_PRIO_1 1
+#endif
 
-class MqttSession
-{
-public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
-
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
-
-private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
-
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMsg msg);
-    void Connected_HandleMsg(MqttMsg msg);
-    void WaitForPubRel_HandleMsg(MqttMsg msg);
-    void Disconnected_HandleMsg(MqttMsg msg);
-
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
-};
-
-#endif /* MQTT_SESSION_H */
+#ifndef USER_TASK_PRIO_2
+#define USER_TASK_PRIO_2 2
+#endif

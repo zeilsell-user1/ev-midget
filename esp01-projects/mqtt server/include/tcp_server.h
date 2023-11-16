@@ -25,6 +25,7 @@
 #define TCP_SERVER_H
 
 #include <memory>
+#include <map>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -50,35 +51,36 @@
 
 class TcpServer
 {
+public:
+    using TcpSessionPtr = std::shared_ptr<TcpSession>;
+    static TcpServer &getInstance();
+
+    bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSessionPtr), void *obj);
+    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSessionPtr), void *obj);
+    void sessionConnected(void *arg);
+
+    std::shared_ptr<TcpSession> getSession(TcpSession::SessionId sessionId);
+    
 private:
-    enum ServerType
-    {
-        NOT_STARTED,
-        CLIENT,
-        SERVER
-    };
+    std::map<TcpSession::SessionId, TcpSessionPtr> tcpSessions;
+    os_event_t tcpServerTaskQueue[MAX_TCP_SESSIONS];
+    espconn serverConn;  // used to define the local server regardless of client or server sessions
+    esp_tcp tcpConfig;   // used to define the local server regardless of client or server sessions
+    ip_addr_t ipAddress; // the remote address used to set up a client session
+    unsigned short port; // the remote or local port 
+    void *ownerObj;      // the upper layer object that owns the callbacks
 
-    ServerType status;
-    ip_addr_t ipAddress;
-    unsigned short port;
-    std::shared_ptr<TcpSession> tcpSessions[MAX_SESSIONS];
-    void *ownerObj; // the iupper layer object that owns the callbacks
-
-    void (*serverConnectedCb)(void *obj, std::shared_ptr<TcpSession> tcpSession);
-    void (*clientConnectedCb)(void *obj, std::shared_ptr<TcpSession> tcpSession);
+    void (*serverConnectedCb)(void *obj, TcpSessionPtr tcpSession);
+    void (*clientConnectedCb)(void *obj, TcpSessionPtr tcpSession);
 
     TcpServer();
     ~TcpServer();
     TcpServer(const TcpServer &) = delete;
     TcpServer &operator=(const TcpServer &) = delete;
 
-public:
-    static TcpServer &getInstance();
-
-    bool startTcpServer(unsigned short port, void (*cb)(void *, std::shared_ptr<TcpSession>), void *obj);
-    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, std::shared_ptr<TcpSession>), void *obj);
-    void serverSessionConnected(void *arg);
-    void clientSessionConnected(void *arg);
+    bool addSession(TcpSession::SessionId sessionId, const TcpSessionPtr& TcpSession);
+    void removeSession(TcpSession::SessionId sessionId);
+    TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
 };
 
 #endif // TCP_SERVER_H

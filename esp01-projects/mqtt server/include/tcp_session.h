@@ -25,6 +25,8 @@
 #define TCP_SESSION_H
 
 #include <cstdint>
+#include <os_type.h>
+
 #ifdef ESP8266
 #include <lwip/ip.h>
 #include "espconn.h"
@@ -48,27 +50,14 @@
 class TcpSession
 {
 public:
-    // Define a structure to hold client-specific information
-    struct ClientConfig
+    struct SessionConfig
     {
         ip_addr_t remote_ip;
         unsigned short remote_port;
-        int clientData; // Example client-specific data
+        unsigned long sessionExpiryIntervalTimeout;
     };
 
-    struct ServerConfig
-    {
-        ip_addr_t remote_ip;
-        unsigned short remote_port;
-        int clientData; // Example client-specific data
-    };
-
-    enum SessionType
-    {
-        NOT_STARTED,
-        CLIENT,
-        SERVER
-    };
+    using SessionId = std::size_t;
 
     enum SessionState
     {
@@ -82,32 +71,42 @@ public:
     };
 
     TcpSession();
-    TcpSession(uintptr_t sessionId,
-               enum SessionType type,
-               enum SessionState state,
+    TcpSession(SessionState state,
                ip_addr_t ipAddress, 
                unsigned short port,
                espconn serverConn); 
 
     bool isSessionValid();
-    uintptr_t getSessionId();
+    SessionId getSessionId();
 
-    void registerSessionDisconnectCb(void (*cb)(void *, void *), void *obj);
-    void registerIncomingMessageCb(void (*cb)(void *, char *, unsigned short, void *), void *obj);
-    void registerMessageSentCb(void (*cb)(void *, void *), void *obj);
+    void registerSessionCbListener(void *obj);
+    void registerSessionDisconnectCb(void (*cb)(void *, void *));
+    void registerIncomingMessageCb(void (*cb)(void *, char *, unsigned short, void *));
+    void registerMessageSentCb(void (*cb)(void *, void *));
     
+    void sessionDisconnected(espconn *);
+    void sessionIncomingMessage(espconn *, char *, unsigned short);
+    void sessionMessageSent(espconn *);
+
+    static ip_addr_t convertIpAddress(unsigned char *);
+    static SessionId createUniqueIdentifier(const ip_addr_t& ipAddress, int port);
+
 private:
+    // data that is private to the session
+
+    os_event_t tcp_session_task_queue[MAX_TCP_SESSIONS];
+
     bool sessionValid;
-    uintptr_t sessionId;
-    enum SessionState state;
-    enum SessionType type;
-    ip_addr_t ipAddress;
-    unsigned long sessionExpiryIntervalTimeout;
+    SessionId sessionId;
+    SessionState sessionState;
+    void * sessionCbListener;
+    SessionConfig sessionConfig;
+    
+    // methods that are private to teh session
 
-    void (*disconnectedCb)(void *obj, void *arg);
-    void (*incomingMessageCb)(void *obj, void *arg, char *pdata, unsigned short len);
-    void (*messageSentCb)(void *obj, void *arg);
-
+    void (*disconnectedCb)(void *arg, void *obj);
+    void (*incomingMessageCb)(void *arg, char *pdata, unsigned short len, void *obj);
+    void (*messageSentCb)(void *arg, void *obj);
 };
 
 #endif // TCP_SESSION_H
