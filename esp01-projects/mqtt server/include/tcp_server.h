@@ -63,7 +63,6 @@ public:
     
 private:
     std::map<TcpSession::SessionId, TcpSessionPtr> tcpSessions;
-    os_event_t tcpServerTaskQueue[MAX_TCP_SESSIONS];
     espconn serverConn;  // used to define the local server regardless of client or server sessions
     esp_tcp tcpConfig;   // used to define the local server regardless of client or server sessions
     ip_addr_t ipAddress; // the remote address used to set up a client session

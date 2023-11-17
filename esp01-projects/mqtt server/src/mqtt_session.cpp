@@ -22,6 +22,7 @@
  *******************************************************************************/
 
 #include "mqtt_session.h"
+#include "mqtt_message_handler.h"
 
 /*
  ******************************************************************************
@@ -100,6 +101,7 @@ void MqttSession::handleTcpMessageSent(void *arg)
 
 void MqttSession::handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len)
 {
+    MqttMessageHandler::handleMessage((const unsigned char *)pdata, len);
 }
 
 /*
@@ -118,7 +120,7 @@ void MqttSession::handleTcpIncomingMessage(void *arg, char *pdata, unsigned shor
 //     - If invalid, send a CONNACK with an appropriate return code and transition to STATE_DISCONNECTED
 
 
-void MqttSession::WaitForConnect_HandleMsg(MqttMsg msg)
+void MqttSession::WaitForConnect_HandleMsg(MqttMessage msg)
 {
 
 }
@@ -154,7 +156,7 @@ void MqttSession::WaitForConnect_HandleMsg(MqttMsg msg)
 //     - Process the PUBACK message
 //     - Optionally, retry sending any pending PUBLISH messages
 
-void MqttSession::Connected_HandleMsg(MqttMsg msg)
+void MqttSession::Connected_HandleMsg(MqttMessage msg)
 {
 
 }
@@ -166,7 +168,7 @@ void MqttSession::Connected_HandleMsg(MqttMsg msg)
 //     - Send a PUBCOMP
 //     - Transition to STATE_CONNECTED
 
-void MqttSession::WaitForPubRel_HandleMsg(MqttMsg msg)
+void MqttSession::WaitForPubRel_HandleMsg(MqttMessage msg)
 {
 
 }
@@ -186,7 +188,7 @@ void MqttSession::WaitForPubRel_HandleMsg(MqttMsg msg)
 //         - Close the connection and free any associated resources
 
 
-void MqttSession::Disconnected_HandleMsg(MqttMsg msg)
+void MqttSession::Disconnected_HandleMsg(MqttMessage msg)
 {
 
 }

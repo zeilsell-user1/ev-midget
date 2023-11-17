@@ -21,48 +21,42 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
+// int main() {
+//     // Example PUBREC message (replace this with the actual received bytes)
+//     std::vector<unsigned char> receivedPubrecMessage = {0x50, 0x02, 0x01, 0x23};
 
-#include <memory>
+//     MqttPubrecParser pubrecParser(receivedPubrecMessage);
+//     pubrecParser.parsePubrecMessage();
 
-#include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_message.h"
+//     // Display parsed information
+//     std::cout << "Packet Identifier: " << pubrecParser.getPacketIdentifier() << std::endl;
 
-class MqttSession
+//     return 0;
+// }
+
+#include <iostream>
+#include <vector>
+
+class MqttPubrecParser
 {
 public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
-
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+    MqttPubrecParser(const std::vector<unsigned char> &pubrecMessage);
+    void parsePubrecMessage();
 
 private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
+    void parseFixedHeader();
+    void parseVariableHeader();
+    int parseRemainingLength();
+    void parsePacketIdentifier();
 
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMessage msg);
-    void Connected_HandleMsg(MqttMessage msg);
-    void WaitForPubRel_HandleMsg(MqttMessage msg);
-    void Disconnected_HandleMsg(MqttMessage msg);
+public:
+    // Accessors to retrieve parsed information
+    int getPacketIdentifier() const;
 
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
+private:
+    std::vector<unsigned char> pubrecMessage_;
+    int currentIndex_;
+    unsigned char fixedHeader_;
+    int remainingLength_;
+    int packetIdentifier_;
 };
-
-#endif /* MQTT_SESSION_H */

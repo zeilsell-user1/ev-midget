@@ -21,48 +21,42 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
+// int main() {
+//     // Example PUBLISH message (replace this with the actual received bytes)
+//     std::vector<unsigned char> receivedPublishMessage = {0x30, 0x0C, 0x00, 0x03, 't', 'o', 'p', 'i', 'c', 0x01, 0x23, 'p', 'a', 'y', 'l', 'o', 'a', 'd'};
 
-#include <memory>
+//     MqttPublishParser publishParser(receivedPublishMessage);
+//     publishParser.parsePublishMessage();
 
-#include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_message.h"
+//     // Display parsed information
+//     std::cout << "Topic Name: " << publishParser.getTopicName() << std::endl;
+//     std::cout << "Packet Identifier: " << publishParser.getPacketIdentifier() << std::endl;
 
-class MqttSession
+//     return 0;
+// }
+
+#include <vector>
+#include <string>
+
+class MqttPublishParser
 {
 public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
-
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+    MqttPublishParser(const std::vector<unsigned char> &publishMessage);
+    void parsePublishMessage();
 
 private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
+    void parseFixedHeader();
+    void parseVariableHeader();
+    void parsePayload();
+    int parseRemainingLength();
+    void parseTopicName();
+    void parsePacketIdentifier();
 
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMessage msg);
-    void Connected_HandleMsg(MqttMessage msg);
-    void WaitForPubRel_HandleMsg(MqttMessage msg);
-    void Disconnected_HandleMsg(MqttMessage msg);
-
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
+private:
+    std::vector<unsigned char> publishMessage_;
+    int currentIndex_;
+    unsigned char fixedHeader_;
+    int remainingLength_;
+    std::string topicName_;
+    int packetIdentifier_;
 };
-
-#endif /* MQTT_SESSION_H */

@@ -55,7 +55,7 @@ private:
     std::unique_ptr<MqttSession> mqttSession;
   };
 
-  MapSessions sessionMapping[MAX_SESSIONS];
+  MapSessions sessionMapping[MAX_MQTT_SESSIONS];
   ip_addr_t ipAddress;
   unsigned short port;
 };

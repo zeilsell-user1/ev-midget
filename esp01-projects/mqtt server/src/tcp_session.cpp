@@ -49,7 +49,7 @@ void nullcallback2(void *arg, char *pdata, unsigned short len, void *obj)
 void localSessionDisconnectCb(void *arg)
 {
     struct espconn *conn = (struct espconn *)arg;
-    const ip_addr_t ipAddress = convertIpAddress(conn->proto.tcp->remote_ip);
+    const ip_addr_t ipAddress = TcpSession::convertIpAddress(conn->proto.tcp->remote_ip);
     TcpSession::SessionId sessionId = TcpSession::createUniqueIdentifier(ipAddress, conn->proto.tcp->remote_port);
 
     TcpServer &tcpServer = TcpServer::getInstance();
@@ -60,7 +60,7 @@ void localSessionDisconnectCb(void *arg)
 void localIncomingMessageCb(void *arg, char *pdata, unsigned short len)
 {
     struct espconn *conn = (struct espconn *)arg;
-    const ip_addr_t ipAddress = convertIpAddress(conn->proto.tcp->remote_ip);
+    const ip_addr_t ipAddress = TcpSession::convertIpAddress(conn->proto.tcp->remote_ip);
     TcpSession::SessionId sessionId = TcpSession::createUniqueIdentifier(ipAddress, conn->proto.tcp->remote_port);
 
     TcpServer &tcpServer = TcpServer::getInstance();
@@ -71,7 +71,7 @@ void localIncomingMessageCb(void *arg, char *pdata, unsigned short len)
 void localMessageSentCb(void *arg)
 {
     struct espconn *conn = (struct espconn *)arg;
-    const ip_addr_t ipAddress = convertIpAddress(conn->proto.tcp->remote_ip);
+    const ip_addr_t ipAddress = TcpSession::convertIpAddress(conn->proto.tcp->remote_ip);
     TcpSession::SessionId sessionId = TcpSession::createUniqueIdentifier(ipAddress, conn->proto.tcp->remote_port);
 
     TcpServer &tcpServer = TcpServer::getInstance();
@@ -170,7 +170,7 @@ void TcpSession::sessionMessageSent(espconn *conn)
 
 // stiatic utility methods
 
-ip_addr_t convertIpAddress(unsigned char *ipAddr)
+ip_addr_t TcpSession::convertIpAddress(unsigned char *ipAddr)
 {
     ip_addr_t ipAddress;
     IP4_ADDR(&ipAddress, ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3]);

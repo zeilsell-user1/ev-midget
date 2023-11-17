@@ -21,48 +21,33 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
+// int main() {
+//     // Example PINGREQ message (replace this with the actual received bytes)
+//     std::vector<unsigned char> receivedPingreqMessage = {0xC0, 0x00};
 
-#include <memory>
+//     MqttPingreqParser pingreqParser(receivedPingreqMessage);
+//     pingreqParser.parsePingreqMessage();
 
-#include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_message.h"
+//     // No specific information to display for PINGREQ
 
-class MqttSession
+//     return 0;
+// }
+
+#include <iostream>
+#include <vector>
+#include "mqtt_pingreq_parser.h"
+
+MqttPingreqParser::MqttPingreqParser(const std::vector<unsigned char> &pingreqMessage)
+    : pingreqMessage_(pingreqMessage), currentIndex_(0) {}
+
+// Parse the PINGREQ message
+void MqttPingreqParser::parsePingreqMessage()
 {
-public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
+    parseFixedHeader();
+}
 
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
-
-private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
-
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMessage msg);
-    void Connected_HandleMsg(MqttMessage msg);
-    void WaitForPubRel_HandleMsg(MqttMessage msg);
-    void Disconnected_HandleMsg(MqttMessage msg);
-
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
-};
-
-#endif /* MQTT_SESSION_H */
+void MqttPingreqParser::parseFixedHeader()
+{
+    // The first byte of the message is the fixed header
+    fixedHeader_ = pingreqMessage_[currentIndex_++];
+}

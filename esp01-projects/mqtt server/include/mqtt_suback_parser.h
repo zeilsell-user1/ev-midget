@@ -21,48 +21,30 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
+#include <vector>
+#include "mqtt_message_parser.h"
 
-#include <memory>
-
-#include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_message.h"
-
-class MqttSession
+class MqttSubackParser : public MqttMessageParser
 {
 public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
+    MqttSubackParser(const std::vector<unsigned char> &subackMessage);
+    void parseSubackMessage();
+    
+private:
+    void parseFixedHeader();
+    void parseVariableHeader();
+    int parseRemainingLength();
+    void parsePacketIdentifier();
+    void parsePayload();
 
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+public:
+    // Accessors to retrieve parsed information
+    int getPacketIdentifier() const;
 
 private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
-
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMessage msg);
-    void Connected_HandleMsg(MqttMessage msg);
-    void WaitForPubRel_HandleMsg(MqttMessage msg);
-    void Disconnected_HandleMsg(MqttMessage msg);
-
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
+    std::vector<unsigned char> subackMessage_;
+    int currentIndex_;
+    unsigned char fixedHeader_;
+    int remainingLength_;
+    int packetIdentifier_;
 };
-
-#endif /* MQTT_SESSION_H */

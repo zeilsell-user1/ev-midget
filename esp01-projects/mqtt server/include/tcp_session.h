@@ -25,7 +25,6 @@
 #define TCP_SESSION_H
 
 #include <cstdint>
-#include <os_type.h>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -93,8 +92,6 @@ public:
 
 private:
     // data that is private to the session
-
-    os_event_t tcp_session_task_queue[MAX_TCP_SESSIONS];
 
     bool sessionValid;
     SessionId sessionId;

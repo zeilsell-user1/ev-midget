@@ -48,7 +48,7 @@ MqttServer::MqttServer()
     ip4_addr_set_any(&this->ipAddress);
     this->port = 0;
 
-    for (int i = 0; i < MAX_SESSIONS; i++)
+    for (int i = 0; i < MAX_MQTT_SESSIONS; i++)
     {
         this->sessionMapping[i].mappingValid = false;
         this->sessionMapping[i].mqttSession = nullptr;
@@ -64,7 +64,7 @@ MqttServer::MqttServer(ip_addr_t ipAddress, unsigned short port) // client
     TcpServer& tcpServer = TcpServer::getInstance();
     tcpServer.startTcpClient(this->ipAddress, this->port, tcpSessionConnectCb, (void *)this);
     
-    for (int i = 0; i < MAX_SESSIONS; i++)
+    for (int i = 0; i < MAX_TCP_SESSIONS; i++)
     {
         this->sessionMapping[i].mappingValid = false;
         this->sessionMapping[i].mqttSession = nullptr;
@@ -80,7 +80,7 @@ MqttServer::MqttServer(unsigned short port) // server
     TcpServer& tcpServer = TcpServer::getInstance();
     tcpServer.startTcpServer(this->port, tcpSessionConnectCb, (void *)this);
     
-    for (int i = 0; i < MAX_SESSIONS; i++)
+    for (int i = 0; i < MAX_TCP_SESSIONS; i++)
     {
         this->sessionMapping[i].mappingValid = false;
         this->sessionMapping[i].mqttSession = nullptr;
@@ -92,7 +92,7 @@ void MqttServer::handleTcpSessionConnect(std::shared_ptr<TcpSession> tcpSession)
 {
     int i = 0;
 
-    for (i = 0; i < MAX_SESSIONS; i++)
+    for (i = 0; i < MAX_TCP_SESSIONS; i++)
     {
         if (this->sessionMapping[i].mappingValid == false)
         {
@@ -100,7 +100,7 @@ void MqttServer::handleTcpSessionConnect(std::shared_ptr<TcpSession> tcpSession)
         }
     }
 
-    if (i < MAX_SESSIONS)
+    if (i < MAX_TCP_SESSIONS)
     {
         this->sessionMapping[i].tcpSession = tcpSession;
         this->sessionMapping[i].mqttSession = std::make_unique<MqttSession>(tcpSession);

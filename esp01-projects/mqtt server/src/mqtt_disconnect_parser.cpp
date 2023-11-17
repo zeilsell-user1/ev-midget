@@ -21,48 +21,30 @@
  * THE SOFTWARE.
  *******************************************************************************/
 
-#ifndef MQTT_SESSION_H
-#define MQTT_SESSION_H
+// int main() {
+//     // Example DISCONNECT message (replace this with the actual received bytes)
+//     std::vector<unsigned char> receivedDisconnectMessage = {0xE0, 0x00};
 
-#include <memory>
+//     MqttDisconnectParser disconnectParser(receivedDisconnectMessage);
+//     disconnectParser.parseDisconnectMessage();
 
-#include "defaults.h"
-#include "tcp_session.h"
-#include "mqtt_topic.h"
-#include "mqtt_message.h"
+//     // No specific information to display for DISCONNECT
 
-class MqttSession
+//     return 0;
+// }
+
+#include "mqtt_disconnect_parser.h"
+
+MqttDisconnectParser::MqttDisconnectParser(const std::vector<unsigned char> &disconnectMessage)
+    : disconnectMessage_(disconnectMessage), currentIndex_(0) {}
+
+void MqttDisconnectParser::parseDisconnectMessage()
 {
-public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
+    parseFixedHeader();
+}
 
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
-
-private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
-
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMessage msg);
-    void Connected_HandleMsg(MqttMessage msg);
-    void WaitForPubRel_HandleMsg(MqttMessage msg);
-    void Disconnected_HandleMsg(MqttMessage msg);
-
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
-};
-
-#endif /* MQTT_SESSION_H */
+void MqttDisconnectParser::parseFixedHeader()
+{
+    // The first byte of the message is the fixed header
+    fixedHeader_ = disconnectMessage_[currentIndex_++];
+}

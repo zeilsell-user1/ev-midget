@@ -28,6 +28,10 @@
 #define MQTT_BROKER_PORT 1883
 #endif
 
+#ifndef MAX_MQTT_SESSIONS
+#define MAX_MQTT_SESSIONS 10
+#endif
+
 #ifndef MAX_SUBSCRIPTIONS
 #define MAX_SUBSCRIPTIONS 30
 #endif
