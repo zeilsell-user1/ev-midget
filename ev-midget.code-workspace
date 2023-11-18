@@ -31,6 +31,10 @@
 		{
 			"name": "mqtt server",
 			"path": "esp01-projects/mqtt server"
+		},
+		{
+			"name": "tcp server",
+			"path": "esp01-projects/tcp server"
 		}
 	],
 	"settings": {
