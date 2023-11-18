@@ -36,8 +36,6 @@
 
 // #include "lwip/def.h"
 // #include "lwip/pbuf.h"
-#include "../test/test_mqtt_server/ip_addr.h"
-#include "../test/test_mqtt_server/ip4_addr.h"
 // #include "lwip/err.h"
 // #include "lwip/netif.h"
 

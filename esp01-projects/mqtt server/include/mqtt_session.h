@@ -34,35 +34,35 @@
 class MqttSession
 {
 public:
-    MqttSession();
-    MqttSession(std::shared_ptr<TcpSession> tcpSession);
-    void setSessionFalse();
-    bool isSessionValid();
-    std::shared_ptr<TcpSession> getTcpSession();
+  MqttSession();
+  MqttSession(std::shared_ptr<TcpSession> tcpSession);
+  void setSessionFalse();
+  bool isSessionValid();
+  std::shared_ptr<TcpSession> getTcpSession();
 
-    void handleTcpDisconnect(void *arg);
-    void handleTcpMessageSent(void *arg);
-    void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+  void handleTcpDisconnect(void *arg);
+  void handleTcpMessageSent(void *arg);
+  void handleTcpIncomingMessage(void *arg, char *pdata, unsigned short len);
+
+private: // state machine for the MQTT session
+  void WaitForConnect_HandleMsg(MqttMessage msg);
+  void Connected_HandleMsg(MqttMessage msg);
+  void WaitForPubRel_HandleMsg(MqttMessage msg);
+  void Disconnected_HandleMsg(MqttMessage msg);
+
+private: // utility methods
+  void print_topic(MqttTopic *topic) const;
+  bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
 
 private:
-    bool sessionValid;
-    std::shared_ptr<TcpSession> tcpSession;
-    unsigned char will_qos;
-    int will_retain;
-    int clean_session;
-    unsigned char clientId[23];
-    unsigned char IPAddress[4];
-    unsigned long sessionExpiryIntervalTimeout;
-
-  // state machine for the MQTT session
-    void WaitForConnect_HandleMsg(MqttMessage msg);
-    void Connected_HandleMsg(MqttMessage msg);
-    void WaitForPubRel_HandleMsg(MqttMessage msg);
-    void Disconnected_HandleMsg(MqttMessage msg);
-
-    void print_topic(MqttTopic *topic) const;
-    bool publish_topic(MqttTopic *topic, unsigned char *data, unsigned short data_len) const;
-
+  bool sessionValid_;
+  std::shared_ptr<TcpSession> tcpSession_;
+  unsigned char will_qos_;
+  int will_retain_;
+  int clean_session_;
+  unsigned char clientId_[23];
+  unsigned char IPAddress_[4];
+  unsigned long sessionExpiryIntervalTimeout_;
 };
 
 #endif /* MQTT_SESSION_H */

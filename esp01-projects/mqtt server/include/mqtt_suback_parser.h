@@ -27,8 +27,8 @@
 class MqttSubackParser : public MqttMessageParser
 {
 public:
-    MqttSubackParser(const std::vector<unsigned char> &subackMessage);
-    void parseSubackMessage();
+    MqttSubackParser();
+    void parseMessage(const std::vector<unsigned char> &message);
     
 private:
     void parseFixedHeader();

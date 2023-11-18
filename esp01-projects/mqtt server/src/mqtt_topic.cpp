@@ -32,11 +32,11 @@ MqttTopic::MqttTopic()
 
 MqttTopic::MqttTopic(char const *topic)
 {
-	this->length = strnlen(topic, MAX_TOPIC_LENGTH);
+	length_ = strnlen(topic, MAX_TOPIC_LENGTH);
 
-	if ((this->length != 0) && (this->length != MAX_TOPIC_LENGTH))
+	if ((length_ != 0) && (length_ != MAX_TOPIC_LENGTH))
 	{
-		strcpy(this->topic, topic);
+		strcpy(topic_, topic);
 
 		if (!this->isValidName()) 
 		{
@@ -56,11 +56,11 @@ MqttTopic::MqttTopic(char const *topic)
 
 bool MqttTopic::setTopic(char const *topic)
 {
-	this->length = strnlen(topic, MAX_TOPIC_LENGTH);
+	length_ = strnlen(topic, MAX_TOPIC_LENGTH);
 
-	if ((this->length != 0) && (this->length != MAX_TOPIC_LENGTH))
+	if ((length_ != 0) && (length_ != MAX_TOPIC_LENGTH))
 	{
-		strcpy(this->topic, topic);
+		strcpy(topic_, topic);
 
 		if (!this->isValidName()) 
 		{
@@ -82,8 +82,8 @@ bool MqttTopic::setTopic(char const *topic)
 
 void MqttTopic::resetTopic()
 {
-	memset(this->topic, '\0', MAX_TOPIC_LENGTH);
-	this->length = 0;
+	memset(topic_, '\0', MAX_TOPIC_LENGTH);
+	length_ = 0;
 }
 
 /**
@@ -92,7 +92,7 @@ void MqttTopic::resetTopic()
 
 unsigned char MqttTopic::getLength()
 {
-	return this->length;
+	return length_;
 }
 
 /**
@@ -121,57 +121,57 @@ bool MqttTopic::isValidName() const
 	//
 	// A topic can start with a '$' and all that follows is free text
 
-    if (*(this->topic) == '\0')
+    if (*(topic_) == '\0')
 	{
 		MQTT_ERROR("empty string");
 		return false;
 	}
 	
-    if (*(this->topic) == '/')
+    if (*(topic_) == '/')
 	{
 		MQTT_ERROR("topic started with a '/'");
 		return false;
 	}
 
-    if (*(this->topic) == '$')
+    if (*(topic_) == '$')
 	{
 		MQTT_INFO("topic started with $");
 		return true;
 	}
 	
-	if (strchr(this->topic, ' ') != NULL)
+	if (strchr(topic_, ' ') != NULL)
 	{
 		MQTT_ERROR("space character found in topic");
 		return false;
 	}
 
-	if (strstr(this->topic, "//") != NULL)
+	if (strstr(topic_, "//") != NULL)
 	{
 		MQTT_ERROR("'//' found in topic");
 		return false;
 	}
 
-	if ((strchr(this->topic, '#') != NULL) && (strchr(this->topic, '+') != NULL))
+	if ((strchr(topic_, '#') != NULL) && (strchr(topic_, '+') != NULL))
 	{
 		MQTT_ERROR("failed with # and +");
 		return false;
 	}
 	
-	if (numberOfOccurences((const char *)(this->topic), (const char)'#') > 1)
+	if (numberOfOccurences((const char *)(topic_), (const char)'#') > 1)
 	{
 		MQTT_ERROR("more than 1 '#' in topic");
 		return false;
 	}
 	
-	if (numberOfOccurences((const char *)(this->topic), (const char)'+') > 1)
+	if (numberOfOccurences((const char *)(topic_), (const char)'+') > 1)
 	{
 		MQTT_ERROR("more than 1 '+' in topic");
 		return false;
 	}
 
-    if (*(this->topic) == '#')
+    if (*(topic_) == '#')
 	{
-		if (*(this->topic + 1) == '\0')
+		if (*(topic_ + 1) == '\0')
 		{
 		    MQTT_INFO("just a '#' in the topic");
 			return true;
@@ -183,9 +183,9 @@ bool MqttTopic::isValidName() const
 		}
 	}
 
-    if (*(this->topic + this->length - 1) == '#') // minus the '\0'
+    if (*(topic_ + length_ - 1) == '#') // minus the '\0'
 	{
-		if (*(this->topic + this->length - 2) == '/') // minus the '#' and '\0'
+		if (*(topic_ + length_ - 2) == '/') // minus the '#' and '\0'
 		{
 		    MQTT_INFO("topic ends with a '/#' so okay");
 			return true; 
@@ -197,13 +197,13 @@ bool MqttTopic::isValidName() const
 		}
 	}
 	
-	if (strchr(this->topic, '#') != NULL) 
+	if (strchr(topic_, '#') != NULL) 
 	{
 		MQTT_ERROR("failed with # as checks for start or end already completed");
 		return false;
 	}
 
-	char *pluspos = strchr(this->topic, '+');
+	char *pluspos = strchr(topic_, '+');
 	
 	if ((pluspos != NULL) && ((*(pluspos - 1) != '/')  || (*(pluspos + 1) != '/')))
 	{
@@ -222,7 +222,7 @@ bool MqttTopic::isValidName() const
 
 bool MqttTopic::hasWildcards() const
 {
-	return (strchr(this->topic, '+') != NULL) || (strchr(this->topic, '#') != NULL);
+	return (strchr(topic_, '+') != NULL) || (strchr(topic_, '#') != NULL);
 }
 
 /**
@@ -253,8 +253,8 @@ bool MqttTopic::operator==(MqttTopic& other)
 	bool thisHasWildcards = this->hasWildcards();
 	bool thatHasWildcards = other.hasWildcards();
 
-    MQTT_INFO("this topic = %s", this->topic);
-	MQTT_INFO("that topic = %s", other.topic);
+    MQTT_INFO("this topic = %s", topic_);
+	MQTT_INFO("that topic = %s", other.topic_);
 	MQTT_INFO("thisHasWildcards %i", thisHasWildcards);
 	MQTT_INFO("thatHasWildcards %i", thatHasWildcards);
 
@@ -270,15 +270,15 @@ bool MqttTopic::operator==(MqttTopic& other)
 	if (!thisHasWildcards && !thatHasWildcards)
 	{
 		MQTT_INFO("no wildcards so straight compare");
-		return (strcmp(this->topic, other.topic) == 0);
+		return (strcmp(topic_, other.topic_) == 0);
 	}
 
 	// if the either of the topics are just a '#' then this is a match to anything except if
 	// the other topic starts with a '$' (special system command)
 
-	if ((*(this->topic) == '#') || (*(other.topic) == '#'))
+	if ((*(topic_) == '#') || (*(other.topic_) == '#'))
 	{
-		if ((*(this->topic) == '$') || (*(other.topic) == '$'))
+		if ((*(topic_) == '$') || (*(other.topic_) == '$'))
 		{
 			MQTT_INFO("dont match # and $");
 			return false;
@@ -297,8 +297,8 @@ bool MqttTopic::operator==(MqttTopic& other)
 	memset(topicCopy, '\0', MAX_TOPIC_LENGTH);
 	memset(otherTopicCopy, '\0', MAX_TOPIC_LENGTH);
 
-	strcpy(topicCopy, this->topic);
-	strcpy(otherTopicCopy, other.topic);
+	strcpy(topicCopy, topic_);
+	strcpy(otherTopicCopy, other.topic_);
 
 	MQTT_INFO("copy this %s, copy other %s", topicCopy, otherTopicCopy);
 
@@ -336,7 +336,7 @@ bool MqttTopic::operator==(MqttTopic& other)
 		MQTT_INFO("next tokens to compare - %s, %s", topicToken, otherTopicToken);
 	}
 
-	MQTT_INFO("does this topic %s = that topic %s?", this->topic, other.topic);
+	MQTT_INFO("does this topic %s = that topic %s?", topic_, other.topic_);
     MQTT_INFO("return %i", match);
     return match;
 } /* end matches */

@@ -28,8 +28,8 @@
 class MqttConnectParser : public MqttMessageParser
 {
 public:
-    MqttConnectParser(const std::vector<unsigned char> &connectMessage);
-    void parseConnectMessage();
+    MqttConnectParser();
+    void parseMessage(const std::vector<unsigned char> &message);
 
 private:
     void parseFixedHeader();

@@ -27,8 +27,8 @@
 class MqttPingreqParser : public MqttMessageParser
 {
 public:
-    MqttPingreqParser(const std::vector<unsigned char> &pingreqMessage);
-    void parsePingreqMessage();
+    MqttPingreqParser();
+    void parseMessage(const std::vector<unsigned char> &message);
 
 private:
     void parseFixedHeader();

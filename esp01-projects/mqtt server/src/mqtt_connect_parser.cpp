@@ -42,12 +42,13 @@
 #include <string>
 #include "mqtt_connect_parser.h"
 
-MqttConnectParser::MqttConnectParser(const std::vector<unsigned char> &connectMessage)
-    : connectMessage_(connectMessage), currentIndex_(0) {}
+MqttConnectParser::MqttConnectParser() {}
 
 // Parse the CONNECT message
-void MqttConnectParser::parseConnectMessage()
+void MqttConnectParser::parseMessage(const std::vector<unsigned char> &connectMessage)
 {
+    connectMessage_ = connectMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
     parsePayload();

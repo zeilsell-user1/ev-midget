@@ -41,8 +41,8 @@
 class MqttPublishParser
 {
 public:
-    MqttPublishParser(const std::vector<unsigned char> &publishMessage);
-    void parsePublishMessage();
+    MqttPublishParser();
+    void parseMessage(const std::vector<unsigned char> &message);
 
 private:
     void parseFixedHeader();

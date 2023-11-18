@@ -31,6 +31,8 @@
 #include <lwip/ip.h>
 #include "espconn.h"
 #else
+#include "../test/test_mqtt_server/ip_addr.h"
+#include "../test/test_mqtt_server/ip4_addr.h"
 #include "../test/test_mqtt_server/ip.h"
 #include "../test/test_mqtt_server/espconn.h"
 #endif
@@ -62,16 +64,6 @@ public:
     std::shared_ptr<TcpSession> getSession(TcpSession::SessionId sessionId);
     
 private:
-    std::map<TcpSession::SessionId, TcpSessionPtr> tcpSessions;
-    espconn serverConn;  // used to define the local server regardless of client or server sessions
-    esp_tcp tcpConfig;   // used to define the local server regardless of client or server sessions
-    ip_addr_t ipAddress; // the remote address used to set up a client session
-    unsigned short port; // the remote or local port 
-    void *ownerObj;      // the upper layer object that owns the callbacks
-
-    void (*serverConnectedCb)(void *obj, TcpSessionPtr tcpSession);
-    void (*clientConnectedCb)(void *obj, TcpSessionPtr tcpSession);
-
     TcpServer();
     ~TcpServer();
     TcpServer(const TcpServer &) = delete;
@@ -80,6 +72,18 @@ private:
     bool addSession(TcpSession::SessionId sessionId, const TcpSessionPtr& TcpSession);
     void removeSession(TcpSession::SessionId sessionId);
     TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
+    
+private:
+    std::map<TcpSession::SessionId, TcpSessionPtr> tcpSessions_;
+    espconn serverConn_;  // used to define the local server regardless of client or server sessions
+    esp_tcp tcpConfig_;   // used to define the local server regardless of client or server sessions
+    ip_addr_t ipAddress_; // the remote address used to set up a client session
+    unsigned short port_; // the remote or local port 
+    void *ownerObj_;      // the upper layer object that owns the callbacks
+
+    void (*serverConnectedCb_)(void *obj, TcpSessionPtr tcpSession_);
+    void (*clientConnectedCb_)(void *obj, TcpSessionPtr tcpSession_);
+
 };
 
 #endif // TCP_SERVER_H

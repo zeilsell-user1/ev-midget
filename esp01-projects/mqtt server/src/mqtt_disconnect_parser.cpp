@@ -35,11 +35,12 @@
 
 #include "mqtt_disconnect_parser.h"
 
-MqttDisconnectParser::MqttDisconnectParser(const std::vector<unsigned char> &disconnectMessage)
-    : disconnectMessage_(disconnectMessage), currentIndex_(0) {}
+MqttDisconnectParser::MqttDisconnectParser() {}
 
-void MqttDisconnectParser::parseDisconnectMessage()
+void MqttDisconnectParser::parseMessage(const std::vector<unsigned char> &disconnectMessage)
 {
+    disconnectMessage_ = disconnectMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
 }
 

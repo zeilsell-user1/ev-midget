@@ -27,8 +27,8 @@
 class MqttConnackParser : public MqttMessageParser
 {
 public:
-    MqttConnackParser(const std::vector<unsigned char> &connackMessage);
-    void parseConnackMessage();
+    MqttConnackParser();
+    void parseMessage(const std::vector<unsigned char> &connackMessage);
 
 private:
     void parseFixedHeader();

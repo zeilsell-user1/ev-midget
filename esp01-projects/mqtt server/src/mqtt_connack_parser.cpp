@@ -37,11 +37,12 @@
 
 #include "mqtt_connack_parser.h"
 
-MqttConnackParser::MqttConnackParser(const std::vector<unsigned char> &connackMessage)
-    : connackMessage_(connackMessage), currentIndex_(0) {}
+MqttConnackParser::MqttConnackParser() {}
 
-void MqttConnackParser::parseConnackMessage()
+void MqttConnackParser::parseMessage(const std::vector<unsigned char> &connackMessage)
 {
+    connackMessage_ = connackMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
 }

@@ -37,11 +37,12 @@
 #include "defaults.h"
 #include "mqtt_suback_parser.h"
 
-MqttSubackParser::MqttSubackParser(const std::vector<unsigned char> &subackMessage)
-    : subackMessage_(subackMessage), currentIndex_(0) {}
+MqttSubackParser::MqttSubackParser() {}
 
-void MqttSubackParser::parseSubackMessage()
+void MqttSubackParser::parseMessage(const std::vector<unsigned char> &subackMessage)
 {
+    subackMessage_ = subackMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
     parsePayload();

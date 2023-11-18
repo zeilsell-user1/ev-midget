@@ -62,7 +62,7 @@ MqttSession::MqttSession()
 
 MqttSession::MqttSession(std::shared_ptr<TcpSession> tcpSession)
 {
-    this->tcpSession = tcpSession;
+    tcpSession = tcpSession;
     tcpSession->registerSessionCbListener((void *)this);
     tcpSession->registerSessionDisconnectCb(sessionDisconnectCb);
     tcpSession->registerIncomingMessageCb(incomingMessageCb);
@@ -71,17 +71,17 @@ MqttSession::MqttSession(std::shared_ptr<TcpSession> tcpSession)
 
 void MqttSession::setSessionFalse()
 {
-    this->sessionValid = false;
+    sessionValid_ = false;
 }
 
 bool MqttSession::isSessionValid()
 {
-    return this->sessionValid;
+    return sessionValid_;
 }
 
 std::shared_ptr<TcpSession> MqttSession::getTcpSession()
 {
-    return this->tcpSession;
+    return tcpSession_;
 }
 
 /*

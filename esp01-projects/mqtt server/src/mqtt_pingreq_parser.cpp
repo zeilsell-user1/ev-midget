@@ -37,12 +37,13 @@
 #include <vector>
 #include "mqtt_pingreq_parser.h"
 
-MqttPingreqParser::MqttPingreqParser(const std::vector<unsigned char> &pingreqMessage)
-    : pingreqMessage_(pingreqMessage), currentIndex_(0) {}
+MqttPingreqParser::MqttPingreqParser() {}
 
 // Parse the PINGREQ message
-void MqttPingreqParser::parsePingreqMessage()
+void MqttPingreqParser::parseMessage(const std::vector<unsigned char> &pingreqMessage)
 {
+    pingreqMessage_ = pingreqMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
 }
 

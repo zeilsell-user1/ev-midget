@@ -85,13 +85,13 @@ void localMessageSentCb(void *arg)
 
 TcpSession::TcpSession()
 {
-    this->sessionValid = false;
-    this->sessionId = 0;
-    this->sessionState = ESPCONN_NONE;
-    this->sessionCbListener = nullptr;
-    ip4_addr_set_zero(&(this->sessionConfig.remote_ip));
-    this->sessionConfig.remote_port = 0;
-    this->sessionConfig.sessionExpiryIntervalTimeout = 0;
+    sessionValid_ = false;
+    sessionId_ = 0;
+    sessionState_ = ESPCONN_NONE;
+    sessionCbListener_ = nullptr;
+    ip4_addr_set_zero(&(sessionConfig_.remote_ip));
+    sessionConfig_.remote_port = 0;
+    sessionConfig_.sessionExpiryIntervalTimeout = 0;
     this->disconnectedCb = nullCallback1;
     this->incomingMessageCb = nullcallback2;
     this->messageSentCb = nullCallback1;
@@ -100,40 +100,41 @@ TcpSession::TcpSession()
 TcpSession::TcpSession(SessionState state,
                        ip_addr_t ipAddress,
                        unsigned short port,
-                       espconn serverConn)
+                       espconn *serverConn)
 {
-    this->sessionValid = true;
-    this->sessionId = createUniqueIdentifier(ipAddress, port);
+    sessionValid_ = true;
+    sessionId_ = createUniqueIdentifier(ipAddress, port);
     ;
-    this->sessionState = state;
-    this->sessionCbListener = nullptr; // RJG THSI SIN'T SET!!!!
-    ip4_addr_copy(this->sessionConfig.remote_ip, ipAddress);
-    this->sessionConfig.remote_port = port;
-    this->sessionConfig.sessionExpiryIntervalTimeout = 0;
+    sessionState_ = state;
+    sessionCbListener_ = nullptr; // RJG THSI SIN'T SET!!!!
+    ip4_addr_copy(sessionConfig_.remote_ip, ipAddress);
+    sessionConfig_.remote_port = port;
+    sessionConfig_.sessionExpiryIntervalTimeout = 0;
+    memcpy(&(serverConn_), serverConn, sizeof(espconn));
     this->disconnectedCb = nullCallback1;
     this->incomingMessageCb = nullcallback2;
     this->messageSentCb = nullCallback1;
 
-    espconn_regist_disconcb(&serverConn, localSessionDisconnectCb);
-    espconn_regist_recvcb(&serverConn, localIncomingMessageCb);
-    espconn_regist_sentcb(&serverConn, localMessageSentCb);
+    espconn_regist_disconcb(&serverConn_, localSessionDisconnectCb);
+    espconn_regist_recvcb(&serverConn_, localIncomingMessageCb);
+    espconn_regist_sentcb(&serverConn_, localMessageSentCb);
 }
 
 uintptr_t TcpSession::getSessionId()
 {
-    return this->sessionId;
+    return sessionId_;
 }
 
 bool TcpSession::isSessionValid()
 {
-    return this->sessionValid;
+    return sessionValid_;
 }
 
 // Register the callback listener and the callbacls
 
 void TcpSession::registerSessionCbListener(void *obj)
 {
-    this->sessionCbListener = obj;
+    sessionCbListener_ = obj;
 }
 
 void TcpSession::registerSessionDisconnectCb(void (*cb)(void *arg, void *))
@@ -155,17 +156,17 @@ void TcpSession::registerMessageSentCb(void (*cb)(void *arg, void *))
 
 void TcpSession::sessionDisconnected(espconn *conn)
 {
-    this->disconnectedCb(conn, this->sessionCbListener);
+    this->disconnectedCb(conn, sessionCbListener_);
 }
 
 void TcpSession::sessionIncomingMessage(espconn *conn, char *pdata, unsigned short length)
 {
-    this->incomingMessageCb(conn, pdata, length, this->sessionCbListener);
+    this->incomingMessageCb(conn, pdata, length, sessionCbListener_);
 }
 
 void TcpSession::sessionMessageSent(espconn *conn)
 {
-    this->messageSentCb(conn, this->sessionCbListener);
+    this->messageSentCb(conn, sessionCbListener_);
 }
 
 // stiatic utility methods

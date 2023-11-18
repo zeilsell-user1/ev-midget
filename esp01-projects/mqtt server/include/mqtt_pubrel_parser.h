@@ -39,10 +39,8 @@
 class MqttPubrelParser
 {
 public:
-    MqttPubrelParser(const std::vector<unsigned char> &pubrelMessage);
-
-    // Parse the PUBREL message
-    void parsePubrelMessage();
+    MqttPubrelParser();
+    void parseMessage(const std::vector<unsigned char> &message);
 
 private:
     // Parse the fixed header

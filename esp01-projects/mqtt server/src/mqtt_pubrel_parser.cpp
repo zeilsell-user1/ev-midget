@@ -36,11 +36,12 @@
 
 #include "mqtt_pubrel_parser.h"
 
-MqttPubrelParser::MqttPubrelParser(const std::vector<unsigned char> &pubrelMessage)
-    : pubrelMessage_(pubrelMessage), currentIndex_(0) {}
+MqttPubrelParser::MqttPubrelParser() {}
 
-void MqttPubrelParser::parsePubrelMessage()
+void MqttPubrelParser::parseMessage(const std::vector<unsigned char> &pubrelMessage)
 {
+    pubrelMessage_ = pubrelMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
 }

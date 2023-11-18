@@ -78,9 +78,9 @@ private:
     MQTT_MSG_TYPE_DISCONNECT = 0xE0
   };
 
-  std::vector<unsigned char> message;
-  unsigned char qos;
-  bool retain;
+  std::vector<unsigned char> message_;
+  unsigned char qos_;
+  bool retain_;
 };
 
 #endif /* MQTT_MSG_H */

@@ -37,11 +37,12 @@
 
 #include "mqtt_subscribe_parser.h"
 
-MqttSubscribeParser::MqttSubscribeParser(const std::vector<unsigned char> &subscribeMessage)
-    : subscribeMessage_(subscribeMessage), currentIndex_(0) {}
+MqttSubscribeParser::MqttSubscribeParser() {}
 
-void MqttSubscribeParser::parseSubscribeMessage()
+void MqttSubscribeParser::parseMessage(const std::vector<unsigned char> &subscribeMessage)
 {
+    subscribeMessage_ = subscribeMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
     parsePayload();

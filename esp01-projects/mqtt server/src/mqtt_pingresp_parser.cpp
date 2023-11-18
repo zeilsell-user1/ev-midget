@@ -35,11 +35,12 @@
 
 #include "mqtt_pingresp_parser.h"
 
-MqttPingrespParser::MqttPingrespParser(const std::vector<unsigned char> &pingrespMessage)
-    : pingrespMessage_(pingrespMessage), currentIndex_(0) {}
+MqttPingrespParser::MqttPingrespParser() {}
 
-void MqttPingrespParser::parsePingrespMessage()
+void MqttPingrespParser::parseMessage(const std::vector<unsigned char> &pingrespMessage)
 {
+    pingrespMessage_ = pingrespMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
 }
 

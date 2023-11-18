@@ -41,8 +41,8 @@
 class MqttSubscribeParser
 {
 public:
-    MqttSubscribeParser(const std::vector<unsigned char> &subscribeMessage);
-    void parseSubscribeMessage();
+    MqttSubscribeParser();
+    void parseMessage(const std::vector<unsigned char> &message);
 
 private:
     void parseFixedHeader();

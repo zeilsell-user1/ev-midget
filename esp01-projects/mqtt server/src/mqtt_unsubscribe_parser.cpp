@@ -38,12 +38,12 @@
 #include "defaults.h"
 #include "mqtt_unsubscribe_parser.h"
 
-MqttUnsubscribeParser::MqttUnsubscribeParser(const std::vector<unsigned char> &unsubscribeMessage)
-    : unsubscribeMessage_(unsubscribeMessage), currentIndex_(0) {}
+MqttUnsubscribeParser::MqttUnsubscribeParser() {}
 
-// Parse the UNSUBSCRIBE message
-void MqttUnsubscribeParser::parseUnsubscribeMessage()
+void MqttUnsubscribeParser::parseMessage(const std::vector<unsigned char> &unsubscribeMessage)
 {
+    unsubscribeMessage_ = unsubscribeMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
     parsePayload();

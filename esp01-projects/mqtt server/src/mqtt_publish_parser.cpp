@@ -37,12 +37,13 @@
 
 #include "mqtt_publish_parser.h"
 
-MqttPublishParser::MqttPublishParser(const std::vector<unsigned char> &publishMessage)
-    : publishMessage_(publishMessage), currentIndex_(0) {}
+MqttPublishParser::MqttPublishParser() {}
 
 // Parse the PUBLISH message
-void MqttPublishParser::parsePublishMessage()
+void MqttPublishParser::parseMessage(const std::vector<unsigned char> &publishMessage)
 {
+    publishMessage_ = publishMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
     parsePayload();

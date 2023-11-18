@@ -29,6 +29,8 @@
 #ifdef ESP8266
 #include <lwip/ip.h>
 #else
+#include "../test/test_mqtt_server/ip_addr.h"
+#include "../test/test_mqtt_server/ip4_addr.h"
 #include "../test/test_mqtt_server/ip.h"
 #endif
 
@@ -55,9 +57,9 @@ private:
     std::unique_ptr<MqttSession> mqttSession;
   };
 
-  MapSessions sessionMapping[MAX_MQTT_SESSIONS];
-  ip_addr_t ipAddress;
-  unsigned short port;
+  MapSessions sessionMapping_[MAX_MQTT_SESSIONS];
+  ip_addr_t ipAddress_;
+  unsigned short port_;
 };
 
 #endif /* _MQTT_SERVER_H_ */

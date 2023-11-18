@@ -36,12 +36,13 @@
 
 #include "mqtt_pubrec_parser.h"
 
-MqttPubrecParser::MqttPubrecParser(const std::vector<unsigned char> &pubrecMessage)
-    : pubrecMessage_(pubrecMessage), currentIndex_(0) {}
+MqttPubrecParser::MqttPubrecParser() {}
 
 // Parse the PUBREC message
-void MqttPubrecParser::parsePubrecMessage()
+void MqttPubrecParser::parseMessage(const std::vector<unsigned char> &pubrecMessage)
 {
+    pubrecMessage_ = pubrecMessage;
+    currentIndex_ = 0;
     parseFixedHeader();
     parseVariableHeader();
 }

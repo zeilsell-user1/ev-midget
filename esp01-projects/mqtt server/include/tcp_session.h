@@ -30,6 +30,8 @@
 #include <lwip/ip.h>
 #include "espconn.h"
 #else
+#include "../test/test_mqtt_server/ip_addr.h"
+#include "../test/test_mqtt_server/ip4_addr.h"
 #include "../test/test_mqtt_server/ip.h"
 #include "../test/test_mqtt_server/espconn.h"
 #endif
@@ -73,7 +75,7 @@ public:
     TcpSession(SessionState state,
                ip_addr_t ipAddress, 
                unsigned short port,
-               espconn serverConn); 
+               espconn *serverConn); 
 
     bool isSessionValid();
     SessionId getSessionId();
@@ -91,19 +93,17 @@ public:
     static SessionId createUniqueIdentifier(const ip_addr_t& ipAddress, int port);
 
 private:
-    // data that is private to the session
-
-    bool sessionValid;
-    SessionId sessionId;
-    SessionState sessionState;
-    void * sessionCbListener;
-    SessionConfig sessionConfig;
-    
-    // methods that are private to teh session
-
     void (*disconnectedCb)(void *arg, void *obj);
     void (*incomingMessageCb)(void *arg, char *pdata, unsigned short len, void *obj);
     void (*messageSentCb)(void *arg, void *obj);
+
+private:
+    bool sessionValid_;
+    SessionId sessionId_;
+    SessionState sessionState_;
+    void * sessionCbListener_;
+    SessionConfig sessionConfig_;
+    espconn serverConn_;
 };
 
 #endif // TCP_SESSION_H

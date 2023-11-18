@@ -27,7 +27,7 @@
 class MqttMessageParser
 {
 public:
-    virtual void parseParser(const std::vector<unsigned char> &Parser);
+    virtual void parseMessage(const std::vector<unsigned char> &message) = 0;
 };
 
 
