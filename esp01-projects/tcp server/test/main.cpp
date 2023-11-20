@@ -20,6 +20,8 @@ signed char espconn_connect(struct espconn *espconn) { return 0; }
 signed char espconn_disconnect(struct espconn *espconn) { return 0; }
 signed char espconn_abort(struct espconn *espconn) { return 0; }
 
+espconn_connect_callback cb_;
+
 signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_callback cb)
 {
     INFO("This mock is called when the TCP Server registers with the ESPCONN library");
@@ -28,6 +30,7 @@ signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_ca
     {
         INFO("This is expected to be called with espconnRegistConnectCbTestIndex = 0");
         REQUIRE_EQ(espconn->proto.tcp->local_port, TEST_PORT_1);
+        cb_ = cb;
     }
     else if (espconnRegistConnectCbTestIndex == 1)
     {
@@ -180,6 +183,45 @@ SCENARIO("TCP Server can be instantiated")
                 REQUIRE_EQ(result, false);
             }
         }
+    }
+    
+    GIVEN("that the TcpServer has been retrieved with a getInstance and started as a server")
+    {
+        espconn mockedEspconn;
+        unsigned short port = TEST_PORT_1;
+
+        class MockOwner
+        {
+        public:
+            MockOwner() {}
+
+            void mockServerConnectedCb(void *ownerObj, TcpServer::TcpSessionPtr Session)
+            {
+                INFO("mockServerConnectedCb should be called");
+            }
+        } mockOwner; // Instantiate an object of the local class
+
+        // Use a lambda function as the callback when ESPCONN connects to a session
+        auto callback = [](void *ownerObj, TcpServer::TcpSessionPtr session)
+        {
+            static_cast<MockOwner *>(ownerObj)->mockServerConnectedCb(ownerObj, session);
+        };
+        
+        WHEN("when the connected callback is called")
+        {
+            espconn mockedEspconn;
+            esp_tcp tcp;
+            mockedEspconn.state = ESPCONN_CONNECT;
+            tcp.remote_ip[0] = 168;
+            tcp.remote_ip[1] = 192;
+            tcp.remote_ip[2] = 4;
+            tcp.remote_ip[3] = 2;
+            tcp.remote_port = TEST_PORT_1;
+            mockedEspconn.proto.tcp = &tcp;
+
+            cb_(&mockedEspconn);
+        }
+
     }
 
     // SUBCASE("Test starting TcpClient")
