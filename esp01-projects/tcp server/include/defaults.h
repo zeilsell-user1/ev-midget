@@ -29,12 +29,15 @@
 #define TCP_LIB_DEBUG 1
 #ifdef TCP_LIB_DEBUG
 #define TCP_INFO(format, ...)      \
+    printf("TCP_INFO: ");          \
     printf(format, ##__VA_ARGS__); \
     printf("\n")
 #define TCP_WARNING(format, ...)   \
+    printf("TCP_WARNING: ");          \
     printf(format, ##__VA_ARGS__); \
     printf("\n")
 #define TCP_ERROR(format, ...)     \
+    printf("TCP_ERROR: ");          \
     printf(format, ##__VA_ARGS__); \
     printf("\n")
 #else

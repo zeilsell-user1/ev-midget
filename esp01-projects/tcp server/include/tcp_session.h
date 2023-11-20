@@ -48,6 +48,8 @@
 // teardown phases.
 // #include "espconn.h"
 
+class TcpSErver;
+
 class TcpSession
 {
 public:
@@ -71,16 +73,16 @@ public:
         ESPCONN_CLOSE
     };
 
-    TcpSession();
-    TcpSession(SessionState state,
-               ip_addr_t ipAddress, 
-               unsigned short port,
-               espconn *serverConn); 
-
     bool isSessionValid();
     SessionId getSessionId();
 
-    // these methods are used to regsiter callbacks for TCP session events. There
+    // Since TcpSession is created as a shared_ptr then the constructor meeds to be public. 
+    // HOWEVER, do not call TcpSession directly, a session is created and managed by TcpServer
+
+    TcpSession();
+    TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *serverConn); 
+
+    // these methods are used to register callbacks for TCP session events. There
     // may be multiple sessions, adn each session may be 'owned' by a different instance 
     // of whatever is calling this session. Therefore the void *obj registered as the
     // sessionCbListener is passed as a paremeter int he callback. 

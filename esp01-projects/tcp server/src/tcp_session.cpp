@@ -98,20 +98,16 @@ TcpSession::TcpSession()
     this->messageSentCb = nullCallback1;
 }
 
-TcpSession::TcpSession(SessionState state,
-                       ip_addr_t ipAddress,
-                       unsigned short port,
-                       espconn *serverConn)
+TcpSession::TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
 {
     sessionValid_ = true;
     sessionId_ = createUniqueIdentifier(ipAddress, port);
-    ;
-    sessionState_ = state;
+    sessionState_ = ESPCONN_CONNECT,
     sessionCbListener_ = nullptr; // RJG THSI SIN'T SET!!!!
     ip4_addr_copy(sessionConfig_.remote_ip, ipAddress);
     sessionConfig_.remote_port = port;
     sessionConfig_.sessionExpiryIntervalTimeout = 0;
-    memcpy(&(serverConn_), serverConn, sizeof(espconn));
+    memcpy(&(serverConn_), conn, sizeof(espconn));
     this->disconnectedCb = nullCallback1;
     this->incomingMessageCb = nullcallback2;
     this->messageSentCb = nullCallback1;

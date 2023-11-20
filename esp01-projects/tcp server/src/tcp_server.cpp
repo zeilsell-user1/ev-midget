@@ -68,6 +68,7 @@ TcpServer::TcpServer()
 {
     ip4_addr_set_zero(&ipAddress_);
     port_ = 0;
+    started_ = false;
     serverConnectedCb_ = nullCallback;
     clientConnectedCb_ = nullCallback;
     ownerObj_ = nullptr; // no owner object
@@ -89,7 +90,11 @@ TcpServer &TcpServer::getInstance()
 
 bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessionPtr), void *ownerObj)
 {
-    // TODO One server listening on this port 
+    if (started_ == true)
+    {
+        TCP_WARNING("Trying to start the server a second time");
+        return false;
+    }
 
     ip4_addr_set_zero(&ipAddress_); // server mode has the IP address as zero
 
@@ -111,7 +116,8 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
     switch (rc)
     {
     case 0:
-        TCP_INFO("espconn_connect returned success");
+        TCP_INFO("espconn_connect returned success");  
+        started_ = true;
         return true;
     case ESPCONN_MEM:
         TCP_WARNING("espconn_connect returned ESPCONN_MEM");
@@ -130,9 +136,6 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
 
 bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSessionPtr), void *ownerObj)
 {
-    
-    // TODO One client connecting on this port and IP address combination
-    
     ipAddress_ = ipAddress;
     port_ = port;
     serverConnectedCb_ = (void (*)(void *, std::shared_ptr<TcpSession>))cb;
@@ -192,18 +195,27 @@ void TcpServer::sessionConnected(void *arg)
 
     if ((conn->type == ESPCONN_TCP) && (conn->state == ESPCONN_CONNECT))
     {
-        TcpSessionPtr tcpSession = std::make_shared<TcpSession>(TcpSession::ESPCONN_CONNECT,
-                                                                TcpSession::convertIpAddress(conn->proto.tcp->remote_ip),
-                                                                (unsigned short)conn->proto.tcp->remote_port,
-                                                                conn);
+        TcpSessionPtr tcpSessionPtr = createTcpSession(TcpSession::convertIpAddress(conn->proto.tcp->remote_ip),
+                                                       (unsigned short)conn->proto.tcp->remote_port,
+                                                       conn);
 
-        TcpSession::SessionId sessionId = tcpSession->getSessionId();
+        TcpSession::SessionId sessionId = tcpSessionPtr->getSessionId();
 
-        if (!this->addSession(sessionId, tcpSession))
+        if (!this->addSession(sessionId, tcpSessionPtr))
         {
             espconn_abort(conn); // couldn't add session so abort the TCP session
         }
+        else // call the owner and let them know a session is active
+        {
+            serverConnectedCb_(ownerObj_, tcpSessionPtr);
+        }
     }
+}
+
+TcpServer::TcpSessionPtr TcpServer::createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
+{
+    TcpSessionPtr tcpSessionPtr = std::make_shared<TcpSession>(ipAddress, port, conn);
+    return tcpSessionPtr;
 }
 
 bool TcpServer::addSession(TcpSession::SessionId sessionId, const TcpSessionPtr &session)
@@ -240,6 +252,12 @@ void TcpServer::removeSession(TcpSession::SessionId sessionId)
     {
         TCP_INFO("session not found in the map");
     }
+}
+
+
+std::size_t TcpServer::getSessionCount()
+{
+    return tcpSessions_.size();
 }
 
 TcpServer::TcpSessionPtr TcpServer::getSession(TcpSession::SessionId sessionId)
