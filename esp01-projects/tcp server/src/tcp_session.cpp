@@ -30,11 +30,11 @@
  * is outside of the class so that the callbacks can work across classes
  *******************************************************************************/
 
-void nullCallback1(void *obj)
+void nullCallback1(void *obj, TcpSession::TcpSessionPtr session)
 {
     TCP_ERROR("callback called without initialisation");
 }
-void nullcallback2(char *pdata, unsigned short len, void *obj)
+void nullcallback2(void *obj, char *pdata, unsigned short len, TcpSession::TcpSessionPtr session)
 {
     TCP_ERROR("callback called without initialisation");
 }
@@ -129,22 +129,22 @@ bool TcpSession::isSessionValid()
 
 // Register the callback listener and the callbacls
 
-void TcpSession::registerSessionCbListener(void *obj)
+void TcpSession::registerSessionCbListener(void *obj, TcpSessionPtr session)
 {
     sessionCbListener_ = obj;
 }
 
-void TcpSession::registerSessionDisconnectCb(void (*cb)(void *))
+void TcpSession::registerSessionDisconnectCb(void (*cb)(void *, TcpSessionPtr session))
 {
     this->disconnectedCb = cb;
 }
 
-void TcpSession::registerIncomingMessageCb(void (*cb)(char *pdata, unsigned short len, void *))
+void TcpSession::registerIncomingMessageCb(void (*cb)(void *, char *pdata, unsigned short len, TcpSessionPtr session))
 {
     this->incomingMessageCb = cb;
 }
 
-void TcpSession::registerMessageSentCb(void (*cb)(void *))
+void TcpSession::registerMessageSentCb(void (*cb)(void *, TcpSessionPtr session))
 {
     this->messageSentCb = cb;
 }
@@ -153,17 +153,17 @@ void TcpSession::registerMessageSentCb(void (*cb)(void *))
 
 void TcpSession::sessionDisconnected(espconn *conn)
 {
-    this->disconnectedCb(sessionCbListener_);
+    this->disconnectedCb(sessionCbListener_, (TcpSessionPtr )this);
 }
 
 void TcpSession::sessionIncomingMessage(espconn *conn, char *pdata, unsigned short length)
 {
-    this->incomingMessageCb(pdata, length, sessionCbListener_);
+    this->incomingMessageCb(sessionCbListener_, pdata, length, (TcpSessionPtr )this);
 }
 
 void TcpSession::sessionMessageSent(espconn *conn)
 {
-    this->messageSentCb(sessionCbListener_);
+    this->messageSentCb(sessionCbListener_, (TcpSessionPtr )this);
 }
 
 // stiatic utility methods

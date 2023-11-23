@@ -24,7 +24,7 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
-#include <cstdint>
+#include <memory>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -53,6 +53,7 @@ class TcpSErver;
 class TcpSession
 {
 public:
+    using TcpSessionPtr = std::shared_ptr<TcpSession>;
     struct SessionConfig
     {
         ip_addr_t remote_ip;
@@ -90,10 +91,10 @@ public:
     // The callbacks do not know anything about the underlying espconnlibrary, 
     // the session provide abstraction of the firmware
 
-    void registerSessionCbListener(void *obj);
-    void registerSessionDisconnectCb(void (*cb)(void *obj));
-    void registerIncomingMessageCb(void (*cb)(char *pData, unsigned short len, void *obj));
-    void registerMessageSentCb(void (*cb)(void *obj));
+    void registerSessionCbListener(void *obj, TcpSessionPtr session);
+    void registerSessionDisconnectCb(void (*cb)(void *obj, TcpSessionPtr session));
+    void registerIncomingMessageCb(void (*cb)(void *obj, char *pData, unsigned short len, TcpSessionPtr session));
+    void registerMessageSentCb(void (*cb)(void *obj, TcpSessionPtr session));
     
     // these are the callbacks that the session registeres with the espconn firmware.
 
@@ -107,9 +108,9 @@ public:
     static SessionId createUniqueIdentifier(const ip_addr_t& ipAddress, int port);
 
 private:
-    void (*disconnectedCb)(void *obj);
-    void (*incomingMessageCb)(char *pdata, unsigned short len, void *obj);
-    void (*messageSentCb)(void *obj);
+    void (*disconnectedCb)(void *obj, TcpSessionPtr session);
+    void (*incomingMessageCb)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
+    void (*messageSentCb)(void *obj, TcpSessionPtr session);
 
 private:
     bool sessionValid_;

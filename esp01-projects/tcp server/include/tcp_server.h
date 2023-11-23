@@ -24,8 +24,8 @@
 #ifndef TCP_SERVER_H
 #define TCP_SERVER_H
 
-#include <memory>
 #include <map>
+#include <cstdint>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -54,11 +54,11 @@
 class TcpServer
 {
 public:
-    using TcpSessionPtr = std::shared_ptr<TcpSession>;
     static TcpServer &getInstance();
+    void cleanup();
 
-    bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSessionPtr), void *obj);
-    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSessionPtr), void *obj);
+    bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *obj);
+    bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *obj);
     void sessionConnected(void *arg);
     std::size_t getSessionCount();
     std::shared_ptr<TcpSession> getSession(TcpSession::SessionId sessionId);
@@ -69,16 +69,16 @@ private:
     TcpServer(const TcpServer &) = delete;
     TcpServer &operator=(const TcpServer &) = delete;
 
-    TcpSessionPtr createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn);
-    bool addSession(TcpSession::SessionId sessionId, const TcpSessionPtr &TcpSession);
+    TcpSession::TcpSessionPtr createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn);
+    bool addSession(TcpSession::SessionId sessionId, const TcpSession::TcpSessionPtr &TcpSession);
     void removeSession(TcpSession::SessionId sessionId);
-    TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
+    TcpSession::TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
 
 //private: // to create the TCP Session as a friend class
     
 
 private:
-    std::map<TcpSession::SessionId, TcpSessionPtr> tcpSessions_;
+    std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr> tcpSessions_;
     bool started_;
     espconn serverConn_;  // used to define the local server regardless of client or server sessions
     esp_tcp tcpConfig_;   // used to define the local server regardless of client or server sessions
@@ -86,8 +86,8 @@ private:
     unsigned short port_; // the remote or local port
     void *ownerObj_;      // the upper layer object that owns the callbacks
 
-    void (*serverConnectedCb_)(void *obj, TcpSessionPtr tcpSession_);
-    void (*clientConnectedCb_)(void *obj, TcpSessionPtr tcpSession_);
+    void (*serverConnectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
+    void (*clientConnectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
 };
 
 #endif // TCP_SERVER_H

@@ -88,7 +88,17 @@ TcpServer &TcpServer::getInstance()
     return instance;
 }
 
-bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessionPtr), void *ownerObj)
+void TcpServer::cleanup()
+{
+    ip4_addr_set_zero(&ipAddress_);
+    port_ = 0;
+    started_ = false;
+    serverConnectedCb_ = nullCallback;
+    clientConnectedCb_ = nullCallback;
+    ownerObj_ = nullptr; // no owner object
+}
+
+bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *ownerObj)
 {
     if (started_ == true)
     {
@@ -99,7 +109,7 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
     ip4_addr_set_zero(&ipAddress_); // server mode has the IP address as zero
 
     port_ = port;
-    serverConnectedCb_ = (void (*)(void *, TcpSessionPtr))cb;
+    serverConnectedCb_ = (void (*)(void *, TcpSession::TcpSessionPtr))cb;
     ownerObj_ = ownerObj; // this is the object that owns the callback
 
     // Set up server configuration
@@ -134,7 +144,7 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
     }
 }
 
-bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSessionPtr), void *ownerObj)
+bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *ownerObj)
 {
     ipAddress_ = ipAddress;
     port_ = port;
@@ -195,7 +205,7 @@ void TcpServer::sessionConnected(void *arg)
 
     if ((conn->type == ESPCONN_TCP) && (conn->state == ESPCONN_CONNECT))
     {
-        TcpSessionPtr tcpSessionPtr = createTcpSession(TcpSession::convertIpAddress(conn->proto.tcp->remote_ip),
+        TcpSession::TcpSessionPtr tcpSessionPtr = createTcpSession(TcpSession::convertIpAddress(conn->proto.tcp->remote_ip),
                                                        (unsigned short)conn->proto.tcp->remote_port,
                                                        conn);
 
@@ -212,13 +222,13 @@ void TcpServer::sessionConnected(void *arg)
     }
 }
 
-TcpServer::TcpSessionPtr TcpServer::createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
+TcpSession::TcpSessionPtr TcpServer::createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
 {
-    TcpSessionPtr tcpSessionPtr = std::make_shared<TcpSession>(ipAddress, port, conn);
+    TcpSession::TcpSessionPtr tcpSessionPtr = std::make_shared<TcpSession>(ipAddress, port, conn);
     return tcpSessionPtr;
 }
 
-bool TcpServer::addSession(TcpSession::SessionId sessionId, const TcpSessionPtr &session)
+bool TcpServer::addSession(TcpSession::SessionId sessionId, const TcpSession::TcpSessionPtr &session)
 {
     // Check if the identifier is already in use
     if (tcpSessions_.find(sessionId) == tcpSessions_.end())
@@ -260,7 +270,7 @@ std::size_t TcpServer::getSessionCount()
     return tcpSessions_.size();
 }
 
-TcpServer::TcpSessionPtr TcpServer::getSession(TcpSession::SessionId sessionId)
+TcpSession::TcpSessionPtr TcpServer::getSession(TcpSession::SessionId sessionId)
 {
     auto it = tcpSessions_.find(sessionId);
     if (it != tcpSessions_.end())

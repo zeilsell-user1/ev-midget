@@ -12,53 +12,356 @@
 #include "espconn.h"
 
 #define TEST_PORT_1 1890
+#define IP_1 192
+#define IP_2 168
+#define IP_3 4
+#define IP_4 2
 
-int espconnRegistConnectCbTestIndex = 0;
+// the mocked calls from UUT to ESPCONN
 
-signed char espconn_accept(struct espconn *espconn) { return 0; }
-signed char espconn_connect(struct espconn *espconn) { return 0; }
-signed char espconn_disconnect(struct espconn *espconn) { return 0; }
-signed char espconn_abort(struct espconn *espconn) { return 0; }
+int espconnAcceptTestIndex = 0;
+int espconnConnectTestIndex = 0;
+int espconnDisconnectTestIndex = 0;
+int espconnAbortTestIndex = 0;
 
-espconn_connect_callback cb_;
-
-signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_callback cb)
+signed char espconn_accept(struct espconn *espconn)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called when the TCP Server configures the ESPCONN library as a listener");
 
-    if(espconnRegistConnectCbTestIndex == 0)
+    if (espconnAcceptTestIndex == 0) // a successful return
     {
-        INFO("This is expected to be called with espconnRegistConnectCbTestIndex = 0");
+        INFO("Successful accept");
         REQUIRE_EQ(espconn->proto.tcp->local_port, TEST_PORT_1);
-        cb_ = cb;
+        return 0;
     }
-    else if (espconnRegistConnectCbTestIndex == 1)
+    else if (espconnAcceptTestIndex == 1)
     {
-        FAIL("Not yet developed - espconnRegistConnectCbTestIndex = 1");
+        FAIL("Returns a fail for out of memory");
+        REQUIRE_EQ(espconn->proto.tcp->local_port, TEST_PORT_1);
+        return ESPCONN_MEM;
+    }
+    else if (espconnAcceptTestIndex == 2)
+    {
+        FAIL("Returns a fail for already connected");
+        REQUIRE_EQ(espconn->proto.tcp->local_port, TEST_PORT_1);
+        return ESPCONN_ISCONN;
+    }
+    else if (espconnAcceptTestIndex == 3)
+    {
+        FAIL("Returns a fail for incorrect arguement");
+        return ESPCONN_ARG;
     }
     else
     {
-        FAIL("Not yet developed - espconnRegistConnectCbTestIndex out of range");
+        FAIL("Not yet developed - espconnAcceptTestIndex out of range");
+        return ESPCONN_ARG;
     }
 
     return 0;
 }
 
-signed char espconn_regist_sentcb(
-    struct espconn *espconn,
-    espconn_sent_callback sent_cb) { return 0; }
+signed char espconn_connect(struct espconn *espconn)
+{
+    INFO("This mock is called when the TCP Server connects as a client using the ESPCONN library");
 
-signed char espconn_regist_recvcb(
-    struct espconn *espconn,
-    espconn_recv_callback recv_cb) { return 0; }
+    if (espconnConnectTestIndex == 0)
+    {
+        INFO("successful connection");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return 0;
+    }
+    else if (espconnConnectTestIndex == 1)
+    {
+        FAIL("return a routing problem to the espconn connect");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_RTE;
+    }
+    else if (espconnConnectTestIndex == 2)
+    {
+        FAIL("return an out of memory to the espconn connect");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_MEM;
+    }
+    else if (espconnConnectTestIndex == 3)
+    {
+        FAIL("return an already connect to the espconn connect");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ISCONN;
+    }
+    else if (espconnConnectTestIndex == 4)
+    {
+        FAIL("return a generic arg issue to espconn connect");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnConnectTestIndex out of range");
+        return ESPCONN_ARG;
+    }
 
-signed char espconn_regist_reconcb(
-    struct espconn *espconn,
-    espconn_reconnect_callback recon_cb) { return 0; }
+    return 0;
+}
 
-signed char espconn_regist_disconcb(
-    struct espconn *espconn,
-    espconn_connect_callback discon_cb) { return 0; }
+signed char espconn_disconnect(struct espconn *espconn)
+{
+    INFO("This mock is called when the TCP Server disconnects a session using ESPCONN library");
+
+    if (espconnDisconnectTestIndex == 0)
+    {
+        INFO("successful disconnection");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return 0;
+    }
+    else if (espconnDisconnectTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn disconnect");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnDisconnectTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+
+signed char espconn_abort(struct espconn *espconn)
+{
+    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+
+    if (espconnAbortTestIndex == 0)
+    {
+        INFO("successful abortion");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return 0;
+    }
+    else if (espconnAbortTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn abort");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnAbortTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+
+// the callback to the UUT
+
+int espconnRegistConnectCbTestIndex = 0;
+int espconnRegistDisconnectCbTestIndex = 0;
+int espconnRegistRecvCbTestIndex = 0;
+int espconnRegistSentCbTestIndex = 0;
+int espconnRegistReconnectCbTestIndex = 0;
+espconn_connect_callback connectCb_;
+espconn_sent_callback sentCb_;
+espconn_recv_callback recvCb_;
+espconn_connect_callback disconnectCb_;
+espconn_reconnect_callback reconnectCb_;
+
+signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_callback connCb)
+{
+    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+
+    if (espconnRegistConnectCbTestIndex == 0)
+    {
+        INFO("Successful registeration of connect CB");
+        REQUIRE_EQ(espconn->proto.tcp->local_port, TEST_PORT_1);
+        connectCb_ = connCb;
+    }
+    else if (espconnRegistConnectCbTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn abort");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnAbortTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+
+signed char espconn_regist_sentcb(struct espconn *espconn, espconn_sent_callback sentCb)
+{
+    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+
+    if (espconnRegistSentCbTestIndex == 0)
+    {
+        INFO("Successful registeration of sent CB");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        sentCb_ = sentCb;
+    }
+    else if (espconnRegistSentCbTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn abort");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnAbortTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+
+signed char espconn_regist_recvcb(struct espconn *espconn, espconn_recv_callback recvCb)
+{
+    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+
+    if (espconnRegistRecvCbTestIndex == 0)
+    {
+        INFO("Successful registeration of receive CB");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        recvCb_ = recvCb;
+    }
+    else if (espconnRegistRecvCbTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn abort");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnAbortTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+
+signed char espconn_regist_reconcb(struct espconn *espconn, espconn_reconnect_callback reconCb)
+{
+    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+
+    if (espconnRegistReconnectCbTestIndex == 0)
+    {
+        INFO("Successful registeration of reconnect CB");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        reconnectCb_ = reconCb;
+    }
+    else if (espconnRegistReconnectCbTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn abort");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnAbortTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+
+signed char espconn_regist_disconcb(struct espconn *espconn, espconn_connect_callback disconCb)
+{
+    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+
+    if (espconnRegistDisconnectCbTestIndex == 0)
+    {
+        INFO("Successful registeration of disconnect CB");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        disconnectCb_ = disconCb;
+    }
+    else if (espconnRegistDisconnectCbTestIndex == 1)
+    {
+        FAIL("return a generic arg issue to espconn register disconnect");
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
+        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnAbortTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
 
 // Test cases implemented in this collection:
 //
@@ -145,7 +448,7 @@ SCENARIO("TCP Server can be instantiated")
     }
     GIVEN("that the TcpServer has been retrieved with a getInstance")
     {
-        espconn mockedEspconn;
+        // espconn mockedEspconn;
         unsigned short port = TEST_PORT_1;
 
         class MockOwner
@@ -153,7 +456,7 @@ SCENARIO("TCP Server can be instantiated")
         public:
             MockOwner() {}
 
-            void mockServerConnectedCb(void *ownerObj, TcpServer::TcpSessionPtr Session)
+            void mockServerConnectedCb(void *ownerObj, TcpSession::TcpSessionPtr Session)
             {
                 INFO("The callback that is called by TCP Server if a session is connected");
                 FAIL("In this test, the callback should not be called");
@@ -161,7 +464,7 @@ SCENARIO("TCP Server can be instantiated")
         } mockOwner; // Instantiate an object of the local class
 
         // Use a lambda function as the callback when ESPCONN connects to a session
-        auto callback = [](void *ownerObj, TcpServer::TcpSessionPtr session)
+        auto callback = [](void *ownerObj, TcpSession::TcpSessionPtr session)
         {
             static_cast<MockOwner *>(ownerObj)->mockServerConnectedCb(ownerObj, session);
         };
@@ -175,7 +478,7 @@ SCENARIO("TCP Server can be instantiated")
             }
         }
 
-        WHEN("startTcpServer is called twice")
+        WHEN("startTcpServer is called for a second time")
         {
             THEN("the result of calling startTcpServer a secomd time is false")
             {
@@ -184,7 +487,14 @@ SCENARIO("TCP Server can be instantiated")
             }
         }
     }
-    
+}
+
+SCENARIO("TCP Server can be started and handles the connect callback")
+{
+    espconnRegistConnectCbTestIndex = 0;
+    TcpServer &tcpServer = TcpServer::getInstance();
+    TcpServer::getInstance().cleanup();
+
     GIVEN("that the TcpServer has been retrieved with a getInstance and started as a server")
     {
         espconn mockedEspconn;
@@ -194,62 +504,181 @@ SCENARIO("TCP Server can be instantiated")
         {
         public:
             MockOwner() {}
+            bool callbackCalled = false;
 
-            void mockServerConnectedCb(void *ownerObj, TcpServer::TcpSessionPtr Session)
+            void mockServerConnectedCb(void *ownerObj, TcpSession::TcpSessionPtr session)
             {
-                INFO("mockServerConnectedCb should be called");
+                INFO("mockServerConnectedCb should be called in this test");
+                REQUIRE_EQ(session->isSessionValid(), true);
+                callbackCalled = true;
             }
         } mockOwner; // Instantiate an object of the local class
 
         // Use a lambda function as the callback when ESPCONN connects to a session
-        auto callback = [](void *ownerObj, TcpServer::TcpSessionPtr session)
+        auto callback = [](void *ownerObj, TcpSession::TcpSessionPtr session)
         {
             static_cast<MockOwner *>(ownerObj)->mockServerConnectedCb(ownerObj, session);
         };
-        
+
+        bool result = tcpServer.startTcpServer(port, callback, &mockOwner);
+        REQUIRE_EQ(result, true);
+
         WHEN("when the connected callback is called")
         {
-            espconn mockedEspconn;
             esp_tcp tcp;
+            mockedEspconn.type = ESPCONN_TCP;
             mockedEspconn.state = ESPCONN_CONNECT;
-            tcp.remote_ip[0] = 168;
-            tcp.remote_ip[1] = 192;
-            tcp.remote_ip[2] = 4;
-            tcp.remote_ip[3] = 2;
+            tcp.remote_ip[0] = IP_1;
+            tcp.remote_ip[1] = IP_2;
+            tcp.remote_ip[2] = IP_3;
+            tcp.remote_ip[3] = IP_4;
             tcp.remote_port = TEST_PORT_1;
             mockedEspconn.proto.tcp = &tcp;
 
-            cb_(&mockedEspconn);
+            connectCb_(&mockedEspconn);
+
+            REQUIRE_EQ(mockOwner.callbackCalled, true);
         }
-
     }
-
-    // SUBCASE("Test starting TcpClient")
-    // {
-    //     // Your TcpServer instance
-    //     TcpServer tcpServer;
-
-    //     // Mocked espconn instance
-    //     espconn mockedEspconn;
-    //     mockedEspconn.state = ESPCONN_CONNECT; // Set state as needed
-
-    // ip_addr_t ipAddress;
-    // IP4_ADDR(&ipAddress, 192, 168, 4, 2);
-    // unsigned short port = 1890;
-    //     // Mocked callback function for espconn_regist_recvcb
-    //     void mockReceiveCallback(void *arg, char *pdata, unsigned short len)
-    //     {
-    //         // Mocked implementation
-    //     }
-
-    //     // Start the TcpClient
-    //     bool result = tcpServer.startTcpClient(mockedEspconn, mockReceiveCallback, /* obj */);
-
-    //     // Perform assertions on the result
-    //     CHECK(result);
-    //     // Add more assertions based on your implementation
-    // }
 }
+
+SCENARIO("TCP Server can be started and can register all other callbacks")
+{
+    espconnRegistConnectCbTestIndex = 0;
+    TcpServer &tcpServer = TcpServer::getInstance();
+    TcpServer::getInstance().cleanup();
+
+    GIVEN("that the TcpServer has been retrieved with a getInstance and started as a server")
+    {
+        espconn mockedEspconn;
+        unsigned short port = TEST_PORT_1;
+
+        class MockOwner
+        {
+        public:
+            void (*disconnectedCb_)(void *, TcpSession::TcpSessionPtr);
+            void (*incomingMessageCb_)(void *, char *, unsigned short, TcpSession::TcpSessionPtr);
+            void (*sentCb_)(void *, TcpSession::TcpSessionPtr);
+
+            MockOwner() {}
+            MockOwner(void (*disconnectedCb)(void *, TcpSession::TcpSessionPtr),
+                      void (*incomingMessageCb)(void *, char *, unsigned short, TcpSession::TcpSessionPtr),
+                      void (*sentCb)(void *, TcpSession::TcpSessionPtr))
+            {
+                disconnectedCb_ = disconnectedCb;
+                incomingMessageCb_ = incomingMessageCb;
+                sentCb_ = sentCb;
+            }
+
+            bool callbackCalled = false;
+
+            void mockServerConnectedCb(void *ownerObj, TcpSession::TcpSessionPtr session)
+            {
+                TcpServer &tcpServer = TcpServer::getInstance();
+                INFO("mockServerConnectedCb should be called in this test");
+                REQUIRE_EQ(session->isSessionValid(), true);
+                callbackCalled = true;
+
+                session->registerIncomingMessageCb(incomingMessageCb_);
+                session->registerMessageSentCb(sentCb_);
+                session->registerSessionDisconnectCb(disconnectedCb_);
+            }
+
+            void mockDisconnectedCb(void *ownerObj, TcpSession::TcpSessionPtr session)
+            {
+                TcpServer &tcpServer = TcpServer::getInstance();
+                INFO("mockServerConnectedCb should be called in this test");
+                REQUIRE_EQ(session->isSessionValid(), true);
+            }
+
+            void mockIncomingMessageCb(void *ownerObj, char *pdata, unsigned short len, TcpSession::TcpSessionPtr session)
+            {
+                TcpServer &tcpServer = TcpServer::getInstance();
+                INFO("mockServerConnectedCb should be called in this test");
+                REQUIRE_EQ(session->isSessionValid(), true);
+            }
+
+            void mockMessageSentCb(void *ownerObj, TcpSession::TcpSessionPtr session)
+            {
+                TcpServer &tcpServer = TcpServer::getInstance();
+                INFO("mockServerConnectedCb should be called in this test");
+                REQUIRE_EQ(session->isSessionValid(), true);
+            }
+        }; // mockOwner; // Instantiate an object of the local class
+
+        // Use a lambda function as the callback when ESPCONN connects to a session
+        auto connectedCb = [](void *ownerObj, TcpSession::TcpSessionPtr session)
+        {
+            static_cast<MockOwner *>(ownerObj)->mockServerConnectedCb(ownerObj, session);
+        };
+
+        // Use a lambda function as the callback when ESPCONN connects to a session
+        auto disconnectedCb = [](void *ownerObj, TcpSession::TcpSessionPtr session)
+        {
+            static_cast<MockOwner *>(ownerObj)->mockDisconnectedCb(ownerObj, session);
+        };
+
+        // Use a lambda function as the callback when ESPCONN connects to a session
+        auto incomingMessageCb = [](void *ownerObj, char *pdata, unsigned short len, TcpSession::TcpSessionPtr session)
+        {
+            static_cast<MockOwner *>(ownerObj)->mockIncomingMessageCb(ownerObj, pdata, len, session);
+        };
+
+        // Use a lambda function as the callback when ESPCONN connects to a session
+        auto sentCb = [](void *ownerObj, TcpSession::TcpSessionPtr session)
+        {
+            static_cast<MockOwner *>(ownerObj)->mockMessageSentCb(ownerObj, session);
+        };
+
+        MockOwner mockOwner = MockOwner(disconnectedCb, incomingMessageCb, sentCb);
+
+        bool result = tcpServer.startTcpServer(port, connectedCb, &mockOwner);
+        REQUIRE_EQ(result, true);
+
+        WHEN("when the connected callback is called")
+        {
+            esp_tcp tcp;
+            mockedEspconn.type = ESPCONN_TCP;
+            mockedEspconn.state = ESPCONN_CONNECT;
+            tcp.remote_ip[0] = IP_1;
+            tcp.remote_ip[1] = IP_2;
+            tcp.remote_ip[2] = IP_3;
+            tcp.remote_ip[3] = IP_4;
+            tcp.remote_port = TEST_PORT_1;
+            mockedEspconn.proto.tcp = &tcp;
+
+            connectCb_(&mockedEspconn);
+
+            REQUIRE_EQ(mockOwner.callbackCalled, true);
+        }
+    }
+}
+
+// SUBCASE("Test starting TcpClient")
+// {
+//     // Your TcpServer instance
+//     TcpServer tcpServer;
+
+//     // Mocked espconn instance
+//     espconn mockedEspconn;
+//     mockedEspconn.state = ESPCONN_CONNECT; // Set state as needed
+
+// ip_addr_t ipAddress;
+// IP4_ADDR(&ipAddress, 192, 168, 4, 2);
+// unsigned short port = 1890;
+//     // Mocked callback function for espconn_regist_recvcb
+//     void mockReceiveCallback(void *arg, char *pdata, unsigned short len)
+//     {
+//         // Mocked implementation
+//     }
+
+//     // Start the TcpClient
+//     bool result = tcpServer.startTcpClient(mockedEspconn, mockReceiveCallback, /* obj */);
+
+//     // Perform assertions on the result
+//     CHECK(result);
+//     // Add more assertions based on your implementation
+// }
 
 // TEST_CASE("TcpSession Test Cases")
 // {
