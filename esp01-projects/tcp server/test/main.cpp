@@ -21,6 +21,7 @@
 
 int espconnAcceptTestIndex = 0;
 int espconnConnectTestIndex = 0;
+int espconnSendTestIndex = 0;
 int espconnDisconnectTestIndex = 0;
 int espconnAbortTestIndex = 99;
 
@@ -117,6 +118,38 @@ signed char espconn_connect(struct espconn *espconn)
     else
     {
         FAIL("Not yet developed - espconnConnectTestIndex out of range");
+        return ESPCONN_ARG;
+    }
+
+    return 0;
+}
+signed char espconn_send(struct espconn *espconn, unsigned char *psent, unsigned short length)
+{
+    INFO("This mock is called when the TCP session sends data using ESPCONN library");
+
+    if (espconnSendTestIndex == 0)
+    {
+        INFO("successful send");
+        return 0;
+    }
+    else if (espconnSendTestIndex == 1)
+    {
+        FAIL("return a generic arg issue");
+        return ESPCONN_ARG;
+    }
+    else if (espconnSendTestIndex == 2)
+    {
+        FAIL("return an out-of-memory issue");
+        return ESPCONN_MEM;
+    }
+    else if (espconnSendTestIndex == 3)
+    {
+        FAIL("return a buffer is full issue");
+        return ESPCONN_MAXNUM;
+    }
+    else
+    {
+        FAIL("Not yet developed - espconnSendTestIndex out of range");
         return ESPCONN_ARG;
     }
 
