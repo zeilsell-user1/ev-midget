@@ -26,6 +26,7 @@
 
 #include <map>
 #include <cstdint>
+#include <memory>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -54,7 +55,7 @@
 class TcpServer
 {
 public:
-    static TcpServer &getInstance();
+    static TcpServer& getInstance();
     void cleanup();
 
     bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *obj);
@@ -63,9 +64,14 @@ public:
     std::size_t getSessionCount();
     std::shared_ptr<TcpSession> getSession(TcpSession::SessionId sessionId);
 
-private:
+    // A drawback of using the RAII (Resource Acquisition Is Initialization) principle is that
+    // shared_ptr and unique_ptr both need to have access to the constructor and destructor for
+    // the class. Unfortunately this means they need to be public, which sucks. Please DO NOT
+    // call TcpServer directly, use getInstance() to get a pointer to the instance
+
     TcpServer();
     ~TcpServer();
+private:
     TcpServer(const TcpServer &) = delete;
     TcpServer &operator=(const TcpServer &) = delete;
 
@@ -74,10 +80,8 @@ private:
     void removeSession(TcpSession::SessionId sessionId);
     TcpSession::TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
 
-//private: // to create the TCP Session as a friend class
-    
-
 private:
+    static std::unique_ptr<TcpServer> instance;
     std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr> tcpSessions_;
     bool started_;
     espconn serverConn_;  // used to define the local server regardless of client or server sessions

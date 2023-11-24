@@ -24,7 +24,8 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
-#include <memory>
+#include <memory>     // For std::shared_ptr, std::unique_ptr
+#include <stdexcept>  // For std::runtime_error
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -50,7 +51,7 @@
 
 class TcpSErver;
 
-class TcpSession
+class TcpSession  : public std::enable_shared_from_this<TcpSession>
 {
 public:
     using TcpSessionPtr = std::shared_ptr<TcpSession>;
@@ -77,12 +78,6 @@ public:
     bool isSessionValid();
     SessionId getSessionId();
 
-    // Since TcpSession is created as a shared_ptr then the constructor meeds to be public. 
-    // HOWEVER, do not call TcpSession directly, a session is created and managed by TcpServer
-
-    TcpSession();
-    TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *serverConn); 
-
     // these methods are used to register callbacks for TCP session events. There
     // may be multiple sessions, adn each session may be 'owned' by a different instance 
     // of whatever is calling this session. Therefore the void *obj registered as the
@@ -107,7 +102,16 @@ public:
     static ip_addr_t convertIpAddress(unsigned char *);
     static SessionId createUniqueIdentifier(const ip_addr_t& ipAddress, int port);
 
+    // A drawback of using the RAII (Resource Acquisition Is Initialization) principle is that
+    // shared_ptr and unique_ptr both need to have access to the constructir and destructor for
+    // the class. Unfortunately this means they need to be public, which sucks. Please DO NOT
+    // call TcpSession directly, a session is created and managed by TcpServer
+
+    TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *serverConn); 
+    ~TcpSession();
+    
 private:
+    TcpSession() = default;
     void (*disconnectedCb)(void *obj, TcpSessionPtr session);
     void (*incomingMessageCb)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
     void (*messageSentCb)(void *obj, TcpSessionPtr session);

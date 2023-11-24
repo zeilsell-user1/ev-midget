@@ -22,7 +22,7 @@
 int espconnAcceptTestIndex = 0;
 int espconnConnectTestIndex = 0;
 int espconnDisconnectTestIndex = 0;
-int espconnAbortTestIndex = 0;
+int espconnAbortTestIndex = 99;
 
 signed char espconn_accept(struct espconn *espconn)
 {
@@ -158,7 +158,7 @@ signed char espconn_disconnect(struct espconn *espconn)
 
 signed char espconn_abort(struct espconn *espconn)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called to trigger a session abort");
 
     if (espconnAbortTestIndex == 0)
     {
@@ -178,6 +178,11 @@ signed char espconn_abort(struct espconn *espconn)
         REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
         REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        return ESPCONN_ARG;
+    }
+    else if (espconnAbortTestIndex == 99)
+    {
+        FAIL("Abort called unexpectedly");
         return ESPCONN_ARG;
     }
     else
@@ -204,7 +209,7 @@ espconn_reconnect_callback reconnectCb_;
 
 signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_callback connCb)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called when the TCP Server registers a connect CB with the ESPCONN library");
 
     if (espconnRegistConnectCbTestIndex == 0)
     {
@@ -233,7 +238,7 @@ signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_ca
 
 signed char espconn_regist_sentcb(struct espconn *espconn, espconn_sent_callback sentCb)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called when the TCP Server registers a sent CB with the ESPCONN library");
 
     if (espconnRegistSentCbTestIndex == 0)
     {
@@ -266,7 +271,7 @@ signed char espconn_regist_sentcb(struct espconn *espconn, espconn_sent_callback
 
 signed char espconn_regist_recvcb(struct espconn *espconn, espconn_recv_callback recvCb)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called when the TCP Server registers a receive CB with the ESPCONN library");
 
     if (espconnRegistRecvCbTestIndex == 0)
     {
@@ -299,7 +304,7 @@ signed char espconn_regist_recvcb(struct espconn *espconn, espconn_recv_callback
 
 signed char espconn_regist_reconcb(struct espconn *espconn, espconn_reconnect_callback reconCb)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called when the TCP Server registers a reconnect CB with the ESPCONN library");
 
     if (espconnRegistReconnectCbTestIndex == 0)
     {
@@ -332,7 +337,7 @@ signed char espconn_regist_reconcb(struct espconn *espconn, espconn_reconnect_ca
 
 signed char espconn_regist_disconcb(struct espconn *espconn, espconn_connect_callback disconCb)
 {
-    INFO("This mock is called when the TCP Server registers with the ESPCONN library");
+    INFO("This mock is called when the TCP Server registers s disconnect CB with the ESPCONN library");
 
     if (espconnRegistDisconnectCbTestIndex == 0)
     {
@@ -493,7 +498,7 @@ SCENARIO("TCP Server can be started and handles the connect callback")
 {
     espconnRegistConnectCbTestIndex = 0;
     TcpServer &tcpServer = TcpServer::getInstance();
-    TcpServer::getInstance().cleanup();
+    tcpServer.cleanup();
 
     GIVEN("that the TcpServer has been retrieved with a getInstance and started as a server")
     {
@@ -546,7 +551,7 @@ SCENARIO("TCP Server can be started and can register all other callbacks")
 {
     espconnRegistConnectCbTestIndex = 0;
     TcpServer &tcpServer = TcpServer::getInstance();
-    TcpServer::getInstance().cleanup();
+    tcpServer.cleanup();
 
     GIVEN("that the TcpServer has been retrieved with a getInstance and started as a server")
     {
