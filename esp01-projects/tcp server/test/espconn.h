@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+
 typedef void *espconn_handle;
 typedef void (* espconn_connect_callback)(void *arg);
 typedef void (* espconn_reconnect_callback)(void *arg, signed char err);
@@ -471,6 +472,16 @@ signed char espconn_recv_hold(struct espconn *pespconn);
 *******************************************************************************/
 signed char espconn_recv_unhold(struct espconn *pespconn);
 
+
+// ADDED FOR TESTING
+
+#define TEST_PORT_1 1890
+#define IP_1 192
+#define IP_2 168
+#define IP_3 4
+#define IP_4 2
+
+// ------------------
 
 #ifdef __cplusplus
 }
