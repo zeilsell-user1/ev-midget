@@ -144,6 +144,44 @@ bool TcpSession::isSessionValid()
     return sessionValid_;
 }
 
+void TcpSession::disconnectSession()
+{
+    if (espconn_disconnect(&serverConn_) != 0)
+    {
+        espconn_abort(&serverConn_);
+    }
+}
+
+TcpSession::sendResult TcpSession::sendMessage(unsigned char *pData, unsigned short len)
+{
+    signed char result;
+
+    if ((result = espconn_send(&serverConn_, pData, len)) == 0)
+    {
+        TCP_INFO("sent data");
+        return SEND_OK;
+    }
+    else if (result == ESPCONN_MEM)
+    {
+        TCP_ERROR("out of memory - send failed");
+        espconn_abort(&serverConn_);
+        return FAILED_ABORTED;
+    }
+    else if (result == ESPCONN_ARG)
+    {
+        TCP_ERROR("serverConn cn't be found - send failed");
+        espconn_abort(&serverConn_);
+        return FAILED_ABORTED;
+    }
+    else
+    {
+        TCP_WARNING("failed to send %d", result);
+        return RETRY;
+    }
+
+    return SEND_OK;
+}
+
 // Register the callback listener and the callbacls
 
 void TcpSession::registerSessionCbListener(void *obj, TcpSessionPtr session)

@@ -74,9 +74,18 @@ public:
         ESPCONN_READ,
         ESPCONN_CLOSE
     };
+    
+    enum sendResult
+    {
+        SEND_OK,
+        RETRY,
+        FAILED_ABORTED
+    };
 
     bool isSessionValid();
     SessionId getSessionId();
+    void disconnectSession();
+    sendResult sendMessage(unsigned char *pData, unsigned short len);
 
     // these methods are used to register callbacks for TCP session events. There
     // may be multiple sessions, adn each session may be 'owned' by a different instance 
@@ -109,7 +118,7 @@ public:
 
     TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *serverConn); 
     ~TcpSession();
-    
+
 private:
     TcpSession() = default;
     void (*disconnectedCb)(void *obj, TcpSessionPtr session);
