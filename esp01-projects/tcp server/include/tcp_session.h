@@ -49,8 +49,6 @@
 // teardown phases.
 // #include "espconn.h"
 
-class TcpSErver;
-
 class TcpSession  : public std::enable_shared_from_this<TcpSession>
 {
 public:
@@ -95,12 +93,12 @@ public:
     // The callbacks do not know anything about the underlying espconnlibrary, 
     // the session provide abstraction of the firmware
 
-    void registerSessionCbListener(void *obj, TcpSessionPtr session);
-    void registerSessionDisconnectCb(void (*cb)(void *obj, TcpSessionPtr session));
-    void registerIncomingMessageCb(void (*cb)(void *obj, char *pData, unsigned short len, TcpSessionPtr session));
-    void registerMessageSentCb(void (*cb)(void *obj, TcpSessionPtr session));
+    void registerSessionDisconnectedCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
+    void registerIncomingMessageCb(void (*cb)(void *obj, char *pData, unsigned short len, TcpSessionPtr session), void *obj);
+    void registerMessageSentCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
+    void registerSessionDeadCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
     
-    // these are the callbacks that the session registeres with the espconn firmware.
+    // these are the callbacks that the session registers with the espconn firmware.
 
     void sessionDisconnected(espconn *);
     void sessionIncomingMessage(espconn *, char *, unsigned short);
@@ -121,17 +119,22 @@ public:
 
 private:
     TcpSession() = default;
-    void (*disconnectedCb)(void *obj, TcpSessionPtr session);
-    void (*incomingMessageCb)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
-    void (*messageSentCb)(void *obj, TcpSessionPtr session);
+    void (*disconnectedCb_)(void *obj, TcpSessionPtr session);
+    void (*incomingMessageCb_)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
+    void (*messageSentCb_)(void *obj, TcpSessionPtr session);
+    void (*deadCb_)(void *obj, TcpSessionPtr session);
 
 private:
     bool sessionValid_;
     SessionId sessionId_;
     SessionState sessionState_;
-    void * sessionCbListener_;
     SessionConfig sessionConfig_;
     espconn serverConn_;
+
+    void * sessionDisconnectedCbListener_;
+    void * incomingMessageCbListener_;
+    void * messageSentCbListener_;
+    void * sessionDeadCbListener_;
 };
 
 #endif // TCP_SESSION_H

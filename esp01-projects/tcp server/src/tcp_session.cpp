@@ -89,14 +89,18 @@ TcpSession::TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
     sessionValid_ = true;
     sessionId_ = createUniqueIdentifier(ipAddress, port);
     sessionState_ = ESPCONN_CONNECT,
-    sessionCbListener_ = nullptr;
+    sessionDisconnectedCbListener_ = nullptr;
+    incomingMessageCbListener_ = nullptr;
+    messageSentCbListener_ = nullptr;
+    sessionDeadCbListener_ = nullptr;
     ip4_addr_copy(sessionConfig_.remote_ip, ipAddress);
     sessionConfig_.remote_port = port;
     sessionConfig_.sessionExpiryIntervalTimeout = 0;
     memcpy(&(serverConn_), conn, sizeof(espconn));
-    this->disconnectedCb = nullCallback1;
-    this->incomingMessageCb = nullcallback2;
-    this->messageSentCb = nullCallback1;
+    this->disconnectedCb_ = nullCallback1;
+    this->incomingMessageCb_ = nullcallback2;
+    this->messageSentCb_ = nullCallback1;
+    this->deadCb_ = nullCallback1;
 
     if (espconn_regist_disconcb(&serverConn_, localSessionDisconnectCb) == 0)
     {
@@ -184,41 +188,46 @@ TcpSession::sendResult TcpSession::sendMessage(unsigned char *pData, unsigned sh
 
 // Register the callback listener and the callbacls
 
-void TcpSession::registerSessionCbListener(void *obj, TcpSessionPtr session)
+void TcpSession::registerSessionDisconnectedCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
 {
-    sessionCbListener_ = obj;
+    sessionDisconnectedCbListener_ = obj;
+    this->disconnectedCb_ = cb;
 }
 
-void TcpSession::registerSessionDisconnectCb(void (*cb)(void *, TcpSessionPtr session))
+void TcpSession::registerIncomingMessageCb(void (*cb)(void *, char *pdata, unsigned short len, TcpSessionPtr session), void *obj)
 {
-    this->disconnectedCb = cb;
+    incomingMessageCbListener_ = obj;
+    this->incomingMessageCb_ = cb;
 }
 
-void TcpSession::registerIncomingMessageCb(void (*cb)(void *, char *pdata, unsigned short len, TcpSessionPtr session))
+void TcpSession::registerMessageSentCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
 {
-    this->incomingMessageCb = cb;
+    messageSentCbListener_ = obj;
+    this->messageSentCb_ = cb;
 }
 
-void TcpSession::registerMessageSentCb(void (*cb)(void *, TcpSessionPtr session))
+void TcpSession::registerSessionDeadCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj)
 {
-    this->messageSentCb = cb;
+    sessionDeadCbListener_ = obj;
+    this->deadCb_ = cb;
 }
 
 // the methods that handle the callbacks.
 
 void TcpSession::sessionDisconnected(espconn *conn)
 {
-    this->disconnectedCb(sessionCbListener_, (TcpSessionPtr)this);
+    this->disconnectedCb_(sessionDisconnectedCbListener_, (TcpSessionPtr)this);
+    this->deadCb_(sessionDeadCbListener_, (TcpSessionPtr)this); // ATM assume dead follow disconnected immediately
 }
 
 void TcpSession::sessionIncomingMessage(espconn *conn, char *pdata, unsigned short length)
 {
-    this->incomingMessageCb(sessionCbListener_, pdata, length, (TcpSessionPtr)this);
+    this->incomingMessageCb_(incomingMessageCbListener_, pdata, length, (TcpSessionPtr)this);
 }
 
 void TcpSession::sessionMessageSent(espconn *conn)
 {
-    this->messageSentCb(sessionCbListener_, (TcpSessionPtr)this);
+    this->messageSentCb_(messageSentCbListener_, (TcpSessionPtr)this);
 }
 
 // stiatic utility methods

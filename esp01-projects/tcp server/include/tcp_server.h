@@ -63,6 +63,7 @@ public:
     void sessionConnected(void *arg);
     std::size_t getSessionCount();
     std::shared_ptr<TcpSession> getSession(TcpSession::SessionId sessionId);
+    void sessionDead(TcpSession::TcpSessionPtr);
 
     // A drawback of using the RAII (Resource Acquisition Is Initialization) principle is that
     // shared_ptr and unique_ptr both need to have access to the constructor and destructor for
@@ -81,7 +82,7 @@ private:
     TcpSession::TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
 
 private:
-    static std::unique_ptr<TcpServer> instance;
+    static std::unique_ptr<TcpServer> instance_;
     std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr> tcpSessions_;
     bool started_;
     espconn serverConn_;  // used to define the local server regardless of client or server sessions
@@ -92,6 +93,7 @@ private:
 
     void (*serverConnectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
     void (*clientConnectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
+    void (*sessionDeadCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
 };
 
 #endif // TCP_SERVER_H

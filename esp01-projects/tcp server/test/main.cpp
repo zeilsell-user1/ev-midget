@@ -230,9 +230,9 @@ SCENARIO("TCP Server can be started and can register all other callbacks")
                 REQUIRE_EQ(session->isSessionValid(), true);
                 callbackCalled = true;
 
-                session->registerIncomingMessageCb(incomingMessageCb_);
-                session->registerMessageSentCb(sentCb_);
-                session->registerSessionDisconnectCb(disconnectedCb_);
+                session->registerIncomingMessageCb(incomingMessageCb_, (void *)this);
+                session->registerMessageSentCb(sentCb_, (void *)this);
+                session->registerSessionDisconnectedCb(disconnectedCb_, (void *)this);
             }
 
             void mockDisconnectedCb(void *ownerObj, TcpSession::TcpSessionPtr session)
@@ -255,6 +255,7 @@ SCENARIO("TCP Server can be started and can register all other callbacks")
                 INFO("mockServerConnectedCb should be called in this test");
                 REQUIRE_EQ(session->isSessionValid(), true);
             }
+            
         }; // mockOwner; // Instantiate an object of the local class
 
         // Use a lambda function as the callback when ESPCONN connects to a session

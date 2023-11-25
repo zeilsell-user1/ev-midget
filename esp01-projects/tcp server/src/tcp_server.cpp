@@ -60,6 +60,12 @@ void espconnClientSessionConnectedCb(void *arg)
     tcpServer.sessionConnected(arg);
 }
 
+void sessionDeadCb(void *obj, TcpSession::TcpSessionPtr session)
+{
+    TcpServer &tcpServer = TcpServer::getInstance();
+    tcpServer.sessionDead(session);
+}
+
 /*******************************************************************************
  * Class Implemenation - private
  *******************************************************************************/
@@ -82,15 +88,15 @@ TcpServer::~TcpServer()
  * Class Implemenation - public
  *******************************************************************************/
 
-std::unique_ptr<TcpServer> TcpServer::instance = nullptr;
+std::unique_ptr<TcpServer> TcpServer::instance_ = nullptr;
 
 TcpServer &TcpServer::getInstance()
 {
-    if (!instance)
+    if (!instance_)
     {
-        instance = std::make_unique<TcpServer>();
+        instance_ = std::make_unique<TcpServer>();
     }
-    return *instance;
+    return *instance_;
 }
 
 void TcpServer::cleanup()
@@ -217,6 +223,11 @@ void TcpServer::sessionConnected(void *arg)
     }
 }
 
+void TcpServer::sessionDead(TcpSession::TcpSessionPtr sessionPtr)
+{
+    this->removeSession((sessionPtr->getSessionId()));
+}
+
 TcpSession::TcpSessionPtr TcpServer::createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
 {
     try
@@ -226,6 +237,7 @@ TcpSession::TcpSessionPtr TcpServer::createTcpSession(ip_addr_t ipAddress, unsig
                                                           conn);
 
         TcpSession::SessionId sessionId = tcpSessionPtr->getSessionId();
+        tcpSessionPtr->registerSessionDeadCb(sessionDeadCb, (void *)this);
 
         if (!this->addSession(sessionId, tcpSessionPtr))
         {
