@@ -59,50 +59,70 @@ signed char espconn_connect(struct espconn *espconn)
     if (espconnConnectTestIndex == 0)
     {
         INFO("successful connection");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return 0;
     }
     else if (espconnConnectTestIndex == 1)
     {
         FAIL("return a routing problem to the espconn connect");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return ESPCONN_RTE;
     }
     else if (espconnConnectTestIndex == 2)
     {
         FAIL("return an out of memory to the espconn connect");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return ESPCONN_MEM;
     }
     else if (espconnConnectTestIndex == 3)
     {
         FAIL("return an already connect to the espconn connect");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return ESPCONN_ISCONN;
     }
     else if (espconnConnectTestIndex == 4)
     {
         FAIL("return a generic arg issue to espconn connect");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return ESPCONN_ARG;
     }
@@ -154,20 +174,28 @@ signed char espconn_disconnect(struct espconn *espconn)
     if (espconnDisconnectTestIndex == 0)
     {
         INFO("successful disconnection");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return 0;
     }
     else if (espconnDisconnectTestIndex == 1)
     {
         FAIL("return a generic arg issue to espconn disconnect");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return ESPCONN_ARG;
     }
@@ -187,20 +215,28 @@ signed char espconn_abort(struct espconn *espconn)
     if (espconnAbortTestIndex == 0)
     {
         INFO("successful abortion");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return 0;
     }
     else if (espconnAbortTestIndex == 1)
     {
         FAIL("return a generic arg issue to espconn abort");
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[0], IP_1);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[1], IP_2);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[2], IP_3);
-        REQUIRE_EQ(espconn->proto.tcp->remote_ip[3], IP_4);
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
+                                   espconn->proto.tcp->remote_ip[1], 
+                                   espconn->proto.tcp->remote_ip[2], 
+                                   espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return ESPCONN_ARG;
     }

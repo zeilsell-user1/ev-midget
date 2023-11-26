@@ -58,6 +58,17 @@ void localSessionDisconnectCb(void *arg)
     tcpSession->sessionDisconnected(conn);
 }
 
+void localSessionReconnectCb(void *arg, signed char err)
+{
+    struct espconn *conn = (struct espconn *)arg;
+    const ip_addr_t ipAddress = TcpSession::convertIpAddress(conn->proto.tcp->remote_ip);
+    TcpSession::SessionId sessionId = TcpSession::createUniqueIdentifier(ipAddress, conn->proto.tcp->remote_port);
+
+    TcpServer &tcpServer = TcpServer::getInstance();
+    std::shared_ptr<TcpSession> tcpSession = tcpServer.getSession(sessionId);
+    tcpSession->sessionReconnect(conn, err);
+}
+
 void localIncomingMessageCb(void *arg, char *pdata, unsigned short len)
 {
     struct espconn *conn = (struct espconn *)arg;
@@ -101,37 +112,6 @@ TcpSession::TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
     this->incomingMessageCb_ = nullcallback2;
     this->messageSentCb_ = nullCallback1;
     this->deadCb_ = nullCallback1;
-
-    if (espconn_regist_disconcb(&serverConn_, localSessionDisconnectCb) == 0)
-    {
-        if (espconn_regist_recvcb(&serverConn_, localIncomingMessageCb) == 0)
-        {
-            if (espconn_regist_sentcb(&serverConn_, localMessageSentCb) == 0)
-            {
-                TCP_INFO("Session registered all callbacks");
-                return;
-            }
-            else
-            {
-                TCP_WARNING("failed to register sent callback");
-            }
-        }
-        else
-        {
-            TCP_WARNING("failed to register incoming message callback");
-        }
-    }
-    else
-    {
-        TCP_WARNING("failed to register disconnect callback");
-    }
-
-    // as one of the registrations didn't work then abort the connection
-
-    espconn_abort(conn); // couldn't add session so abort the TCP session
-    sessionValid_ = false;
-    throw std::runtime_error("Failed to initialize TcpSession");
-    return;
 }
 
 TcpSession::~TcpSession()
@@ -188,22 +168,72 @@ TcpSession::sendResult TcpSession::sendMessage(unsigned char *pData, unsigned sh
 
 // Register the callback listener and the callbacls
 
-void TcpSession::registerSessionDisconnectedCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
+bool TcpSession::registerSessionDisconnectedCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
 {
-    sessionDisconnectedCbListener_ = obj;
-    this->disconnectedCb_ = cb;
+    if (espconn_regist_disconcb(&serverConn_, localSessionDisconnectCb) == 0)
+    {
+        sessionDisconnectedCbListener_ = obj;
+        this->disconnectedCb_ = cb;
+        return true;
+    }
+    else
+    {
+        TCP_WARNING("failed to register disconnect callback with ESPCONN");
+        espconn_abort(&serverConn_); // couldn't add session so abort the TCP session
+        sessionValid_ = false;
+        return false;
+    }
 }
 
-void TcpSession::registerIncomingMessageCb(void (*cb)(void *, char *pdata, unsigned short len, TcpSessionPtr session), void *obj)
+bool TcpSession::registerSessionReconnectCb(void (*cb)(void *, signed char err, TcpSessionPtr session), void *obj)
 {
-    incomingMessageCbListener_ = obj;
-    this->incomingMessageCb_ = cb;
+    if (espconn_regist_reconcb(&serverConn_, localSessionReconnectCb) == 0)
+    {
+        sessionReconnectCbListener_ = obj;
+        this->reconnectCb_ = cb;
+        return true;
+    }
+    else
+    {
+        TCP_WARNING("failed to register reconnect callback with ESPCONN");
+        espconn_abort(&serverConn_); // couldn't add session so abort the TCP session
+        sessionValid_ = false;
+        return false;
+    }
 }
 
-void TcpSession::registerMessageSentCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
+bool TcpSession::registerIncomingMessageCb(void (*cb)(void *, char *pdata, unsigned short len, TcpSessionPtr session), void *obj)
 {
-    messageSentCbListener_ = obj;
-    this->messageSentCb_ = cb;
+    if (espconn_regist_recvcb(&serverConn_, localIncomingMessageCb) == 0)
+    {
+        incomingMessageCbListener_ = obj;
+        this->incomingMessageCb_ = cb;
+        return true;
+    }
+    else
+    {
+        TCP_WARNING("failed to register receive callback with ESPCONN");
+        espconn_abort(&serverConn_); // couldn't add session so abort the TCP session
+        sessionValid_ = false;
+        return false;
+    }
+}
+
+bool TcpSession::registerMessageSentCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
+{
+    if (espconn_regist_sentcb(&serverConn_, localMessageSentCb) == 0)
+    {
+        messageSentCbListener_ = obj;
+        this->messageSentCb_ = cb;
+        return true;
+    }
+    else
+    {
+        TCP_WARNING("failed to register sent callback with ESPCONN");
+        espconn_abort(&serverConn_); // couldn't add session so abort the TCP session
+        sessionValid_ = false;
+        return false;
+    }
 }
 
 void TcpSession::registerSessionDeadCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj)
@@ -218,6 +248,11 @@ void TcpSession::sessionDisconnected(espconn *conn)
 {
     this->disconnectedCb_(sessionDisconnectedCbListener_, (TcpSessionPtr)this);
     this->deadCb_(sessionDeadCbListener_, (TcpSessionPtr)this); // ATM assume dead follow disconnected immediately
+}
+
+void TcpSession::sessionReconnect(espconn *conn, signed char err)
+{
+    this->reconnectCb_(sessionDisconnectedCbListener_, err, (TcpSessionPtr)this);
 }
 
 void TcpSession::sessionIncomingMessage(espconn *conn, char *pdata, unsigned short length)

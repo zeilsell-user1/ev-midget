@@ -93,14 +93,16 @@ public:
     // The callbacks do not know anything about the underlying espconnlibrary, 
     // the session provide abstraction of the firmware
 
-    void registerSessionDisconnectedCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
-    void registerIncomingMessageCb(void (*cb)(void *obj, char *pData, unsigned short len, TcpSessionPtr session), void *obj);
-    void registerMessageSentCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
+    bool registerSessionDisconnectedCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
+    bool registerSessionReconnectCb(void (*cb)(void *obj, signed char err, TcpSessionPtr session), void *obj);
+    bool registerIncomingMessageCb(void (*cb)(void *obj, char *pData, unsigned short len, TcpSessionPtr session), void *obj);
+    bool registerMessageSentCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
     void registerSessionDeadCb(void (*cb)(void *obj, TcpSessionPtr session), void *obj);
     
     // these are the callbacks that the session registers with the espconn firmware.
 
     void sessionDisconnected(espconn *);
+    void sessionReconnect(espconn *, signed char);
     void sessionIncomingMessage(espconn *, char *, unsigned short);
     void sessionMessageSent(espconn *);
 
@@ -120,6 +122,7 @@ public:
 private:
     TcpSession() = default;
     void (*disconnectedCb_)(void *obj, TcpSessionPtr session);
+    void (*reconnectCb_)(void *obj, signed char err, TcpSessionPtr session);
     void (*incomingMessageCb_)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
     void (*messageSentCb_)(void *obj, TcpSessionPtr session);
     void (*deadCb_)(void *obj, TcpSessionPtr session);
@@ -132,6 +135,7 @@ private:
     espconn serverConn_;
 
     void * sessionDisconnectedCbListener_;
+    void * sessionReconnectCbListener_;
     void * incomingMessageCbListener_;
     void * messageSentCbListener_;
     void * sessionDeadCbListener_;

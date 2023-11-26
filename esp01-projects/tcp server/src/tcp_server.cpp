@@ -82,6 +82,7 @@ TcpServer::TcpServer()
 
 TcpServer::~TcpServer()
 {
+    std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr>().swap(tcpSessions_);
 }
 
 /*******************************************************************************
@@ -107,6 +108,7 @@ void TcpServer::cleanup()
     serverConnectedCb_ = nullCallback;
     clientConnectedCb_ = nullCallback;
     ownerObj_ = nullptr; // no owner object
+    tcpSessions_.clear();
 }
 
 bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *ownerObj)
@@ -129,7 +131,11 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
     serverConn_.proto.tcp = &tcpConfig_;
     serverConn_.proto.tcp->local_port = port;
 
-    espconn_regist_connectcb(&serverConn_, espconnServerSessionConnectedCb);
+    if (espconn_regist_connectcb(&serverConn_, espconnServerSessionConnectedCb) != 0)
+    {
+        cleanup();
+        return false;
+    }
     // TODO espconn_regist_reconcb(&serverConn, espconnClientSessionReconnectedCb);
 
     signed char rc = espconn_accept(&serverConn_); // Enable server
@@ -142,15 +148,19 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
         return true;
     case ESPCONN_MEM:
         TCP_WARNING("espconn_connect returned ESPCONN_MEM");
+        cleanup();
         return false;
     case ESPCONN_ISCONN:
         TCP_WARNING("espconn_connect returned MQTT_WARNING");
+        cleanup();
         return false;
     case ESPCONN_ARG:
         TCP_WARNING("espconn_connect returned MQTT_WARNING");
+        cleanup();
         return false;
     default:
         TCP_WARNING("espconn_connect returned %d", rc);
+        cleanup();
         return false;
     }
 }
@@ -172,7 +182,12 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
     serverConn_.proto.tcp->remote_ip[3] = ip4_addr4(&ipAddress);
     serverConn_.proto.tcp->remote_port = port;
 
-    espconn_regist_connectcb(&serverConn_, espconnClientSessionConnectedCb);
+    if (espconn_regist_connectcb(&serverConn_, espconnServerSessionConnectedCb) != 0)
+    {
+        cleanup();
+        return false;
+    }
+    
     // TODO espconn_regist_reconcb(&serverConn, espconnClientSessionReconnectedCb);
 
     signed char rc = espconn_connect(&serverConn_);
@@ -184,18 +199,23 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
         return true;
     case ESPCONN_RTE:
         TCP_WARNING("espconn_connect returned ESPCONN_RTE");
+        cleanup();
         return false;
     case ESPCONN_MEM:
         TCP_WARNING("espconn_connect returned ESPCONN_MEM");
+        cleanup();
         return false;
     case ESPCONN_ISCONN:
         TCP_WARNING("espconn_connect returned MQTT_WARNING");
+        cleanup();
         return false;
     case ESPCONN_ARG:
         TCP_WARNING("espconn_connect returned MQTT_WARNING");
+        cleanup();
         return false;
     default:
         TCP_WARNING("espconn_connect returned %d", rc);
+        cleanup();
         return false;
     }
 }
