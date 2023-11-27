@@ -14,6 +14,12 @@ int espconnRegistRecvCbTestIndex = 0;
 int espconnRegistSentCbTestIndex = 0;
 int espconnRegistReconnectCbTestIndex = 0;
 
+bool espconnRegistConnectCbCalled = false;
+bool espconnRegistDisconnectCbCalled = false;
+bool espconnRegistRecvCbCalled = false;
+bool espconnRegistSentCbCalled = false;
+bool espconnRegistReconnectCbCalled = false;
+
 espconn_connect_callback connectCb_;
 espconn_sent_callback sentCb_;
 espconn_recv_callback recvCb_;
@@ -25,6 +31,8 @@ espconn_reconnect_callback reconnectCb_;
 signed char espconn_regist_connectcb(struct espconn *espconn, espconn_connect_callback connCb)
 {
     INFO("This mock is called when the TCP Server registers a connect CB with the ESPCONN library");
+
+    espconnRegistConnectCbCalled = true;
 
     if (espconnRegistConnectCbTestIndex == 0)
     {
@@ -51,14 +59,16 @@ signed char espconn_regist_sentcb(struct espconn *espconn, espconn_sent_callback
 {
     INFO("This mock is called when the TCP Server registers a sent CB with the ESPCONN library");
 
+    espconnRegistSentCbCalled = true;
+
     if (espconnRegistSentCbTestIndex == 0)
     {
         INFO("Successful registeration of sent CB");
         ip_addr_t ipAddressPassed;
-        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
-                                   espconn->proto.tcp->remote_ip[1], 
-                                   espconn->proto.tcp->remote_ip[2], 
-                                   espconn->proto.tcp->remote_ip[3]);
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0],
+                 espconn->proto.tcp->remote_ip[1],
+                 espconn->proto.tcp->remote_ip[2],
+                 espconn->proto.tcp->remote_ip[3]);
         ip_addr_t ipAddressTest;
         IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
         REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
@@ -83,14 +93,16 @@ signed char espconn_regist_recvcb(struct espconn *espconn, espconn_recv_callback
 {
     INFO("This mock is called when the TCP Server registers a receive CB with the ESPCONN library");
 
+    espconnRegistRecvCbCalled = true;
+
     if (espconnRegistRecvCbTestIndex == 0)
     {
         INFO("Successful registeration of receive CB");
         ip_addr_t ipAddressPassed;
-        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
-                                   espconn->proto.tcp->remote_ip[1], 
-                                   espconn->proto.tcp->remote_ip[2], 
-                                   espconn->proto.tcp->remote_ip[3]);
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0],
+                 espconn->proto.tcp->remote_ip[1],
+                 espconn->proto.tcp->remote_ip[2],
+                 espconn->proto.tcp->remote_ip[3]);
         ip_addr_t ipAddressTest;
         IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
         REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
@@ -115,14 +127,16 @@ signed char espconn_regist_reconcb(struct espconn *espconn, espconn_reconnect_ca
 {
     INFO("This mock is called when the TCP Server registers a reconnect CB with the ESPCONN library");
 
+    espconnRegistReconnectCbCalled = true;
+
     if (espconnRegistReconnectCbTestIndex == 0)
     {
         INFO("Successful registeration of reconnect CB");
         ip_addr_t ipAddressPassed;
-        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
-                                   espconn->proto.tcp->remote_ip[1], 
-                                   espconn->proto.tcp->remote_ip[2], 
-                                   espconn->proto.tcp->remote_ip[3]);
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0],
+                 espconn->proto.tcp->remote_ip[1],
+                 espconn->proto.tcp->remote_ip[2],
+                 espconn->proto.tcp->remote_ip[3]);
         ip_addr_t ipAddressTest;
         IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
         REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
@@ -147,14 +161,16 @@ signed char espconn_regist_disconcb(struct espconn *espconn, espconn_connect_cal
 {
     INFO("This mock is called when the TCP Server registers s disconnect CB with the ESPCONN library");
 
+    espconnRegistDisconnectCbCalled = true;
+
     if (espconnRegistDisconnectCbTestIndex == 0)
     {
         INFO("Successful registeration of disconnect CB");
         ip_addr_t ipAddressPassed;
-        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0], 
-                                   espconn->proto.tcp->remote_ip[1], 
-                                   espconn->proto.tcp->remote_ip[2], 
-                                   espconn->proto.tcp->remote_ip[3]);
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0],
+                 espconn->proto.tcp->remote_ip[1],
+                 espconn->proto.tcp->remote_ip[2],
+                 espconn->proto.tcp->remote_ip[3]);
         ip_addr_t ipAddressTest;
         IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
         REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);

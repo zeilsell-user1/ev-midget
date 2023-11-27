@@ -10,6 +10,12 @@ extern int espconnRegistRecvCbTestIndex;
 extern int espconnRegistSentCbTestIndex;
 extern int espconnRegistReconnectCbTestIndex;
 
+extern bool espconnRegistConnectCbCalled;
+extern bool espconnRegistDisconnectCbCalled;
+extern bool espconnRegistRecvCbCalled;
+extern bool espconnRegistSentCbCalled;
+extern bool espconnRegistReconnectCbCalled;
+
 extern espconn_connect_callback connectCb_;
 extern espconn_sent_callback sentCb_;
 extern espconn_recv_callback recvCb_;
