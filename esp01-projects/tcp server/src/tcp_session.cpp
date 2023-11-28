@@ -96,22 +96,22 @@ void localMessageSentCb(void *arg)
  *******************************************************************************/
 
 TcpSession::TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
+    : sessionValid_(true),
+      sessionId_(createUniqueIdentifier(ipAddress, port)),
+      sessionState_(ESPCONN_CONNECT),
+      sessionDisconnectedCbListener_(nullptr),
+      incomingMessageCbListener_(nullptr),
+      messageSentCbListener_(nullptr),
+      sessionDeadCbListener_(nullptr),
+      disconnectedCb_(nullCallback1),
+      incomingMessageCb_(nullcallback2),
+      messageSentCb_(nullCallback1),
+      deadCb_(nullCallback1)
 {
-    sessionValid_ = true;
-    sessionId_ = createUniqueIdentifier(ipAddress, port);
-    sessionState_ = ESPCONN_CONNECT,
-    sessionDisconnectedCbListener_ = nullptr;
-    incomingMessageCbListener_ = nullptr;
-    messageSentCbListener_ = nullptr;
-    sessionDeadCbListener_ = nullptr;
     ip4_addr_copy(sessionConfig_.remote_ip, ipAddress);
     sessionConfig_.remote_port = port;
     sessionConfig_.sessionExpiryIntervalTimeout = 0;
     memcpy(&(serverConn_), conn, sizeof(espconn));
-    this->disconnectedCb_ = nullCallback1;
-    this->incomingMessageCb_ = nullcallback2;
-    this->messageSentCb_ = nullCallback1;
-    this->deadCb_ = nullCallback1;
 }
 
 TcpSession::~TcpSession()

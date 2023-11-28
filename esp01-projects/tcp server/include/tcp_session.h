@@ -119,6 +119,16 @@ public:
     TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *serverConn); 
     ~TcpSession();
 
+    // In modern C++, it's generally recommended to follow the Rule of Three (or Rule of Five). 
+    // Since you have a custom destructor in TcpSession, it's good practice to also define or 
+    // delete the copy constructor, copy assignment operator, move constructor, and move 
+    // assignment operator. Not technically needed, but added anyway as good proactice.
+    
+    TcpSession(const TcpSession &) = default;
+    TcpSession &operator=(const TcpSession &) = default;
+    TcpSession(TcpSession &&) = default;
+    TcpSession &operator=(TcpSession &&) = default;
+
 private:
     TcpSession() = default;
     void (*disconnectedCb_)(void *obj, TcpSessionPtr session);

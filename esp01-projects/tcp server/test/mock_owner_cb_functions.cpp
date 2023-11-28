@@ -43,14 +43,22 @@ void connectedCb(void *ownerObj, TcpSession::TcpSessionPtr session)
     REQUIRE_EQ(tcpServer.getSessionCount(), 1);
 
     bool imrc = session->registerIncomingMessageCb(incomingMessageCb, (void *)&dummyObject);
-
     espconnRegistRecvCbTestIndex != 0 ? REQUIRE_EQ(imrc, false) : REQUIRE_EQ(imrc, true);
-    bool msrc = session->registerMessageSentCb(sentCb, (void *)&dummyObject);
-    espconnRegistSentCbTestIndex != 0 ? REQUIRE_EQ(msrc, false) : REQUIRE_EQ(msrc, true);
-    bool sdrc = session->registerSessionDisconnectedCb(disconnectedCb, (void *)&dummyObject);
-    espconnRegistDisconnectCbTestIndex != 0 ? REQUIRE_EQ(sdrc, false) : REQUIRE_EQ(sdrc, true);
-    bool srrc = session->registerSessionReconnectCb(reconnectCb, (void *)&dummyObject);
-    espconnRegistReconnectCbTestIndex != 0 ? REQUIRE_EQ(srrc, false) : REQUIRE_EQ(srrc, true);
+    if (imrc)
+    {
+        bool msrc = session->registerMessageSentCb(sentCb, (void *)&dummyObject);
+        espconnRegistSentCbTestIndex != 0 ? REQUIRE_EQ(msrc, false) : REQUIRE_EQ(msrc, true);
+        if (msrc)
+        {
+            bool sdrc = session->registerSessionDisconnectedCb(disconnectedCb, (void *)&dummyObject);
+            espconnRegistDisconnectCbTestIndex != 0 ? REQUIRE_EQ(sdrc, false) : REQUIRE_EQ(sdrc, true);
+            if (sdrc)
+            {
+                bool srrc = session->registerSessionReconnectCb(reconnectCb, (void *)&dummyObject);
+                espconnRegistReconnectCbTestIndex != 0 ? REQUIRE_EQ(srrc, false) : REQUIRE_EQ(srrc, true);
+            }
+        }
+    }
 
     connectedCbCalled = true;
 };

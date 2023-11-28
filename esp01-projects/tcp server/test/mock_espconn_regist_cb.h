@@ -2,6 +2,7 @@
 #ifndef __MOCK_ESPCONN_REGIST_CB_H__
 #define __MOCK_ESPCONN_REGIST_CB_H__
 
+#include <stdbool.h>
 #include "espconn.h"
 
 extern int espconnRegistConnectCbTestIndex;

@@ -4,19 +4,10 @@
 #include <functional>
 
 #include <doctest.h>
-#include <tcp_server.h>
-
-#include "ip_addr.h"
-#include "ip4_addr.h"
-#include "ip.h"
-#include "espconn.h"
-
-#include "mock_espconn_regist_cb.h"
-#include "mock_espconn_functions.h"
 
 #include "scenario_01_instantiation.h"
 #include "scenario_02_start_tcp_server.h"
-#include "scenario_03_start_tcp_server.h"
+#include "scenario_03_start_tcp_client.h"
 #include "scenario_04_incoming_session.h"
 
 // Test cases implemented in this collection:

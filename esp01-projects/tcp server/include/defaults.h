@@ -22,6 +22,10 @@
  *******************************************************************************/
 #include <cstdio>
 
+#ifndef MAX_TCP_CLIENTS
+#define MAX_TCP_CLIENTS 4
+#endif
+
 #ifndef MAX_TCP_SESSIONS
 #define MAX_TCP_SESSIONS 10
 #endif

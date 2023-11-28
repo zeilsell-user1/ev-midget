@@ -20,6 +20,8 @@ bool espconnSendCalled = false;
 bool espconnDisconnectCalled = false;
 bool espconnAbortTestCalled = false;
 
+unsigned char ipOffset = 0;
+
 // the mocked calls from UUT to ESPCONN
 
 signed char espconn_accept(struct espconn *espconn)
@@ -75,7 +77,7 @@ signed char espconn_connect(struct espconn *espconn)
                  espconn->proto.tcp->remote_ip[2],
                  espconn->proto.tcp->remote_ip[3]);
         ip_addr_t ipAddressTest;
-        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4);
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4 + ipOffset);
         REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
         REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
         return 0;

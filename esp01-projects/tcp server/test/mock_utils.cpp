@@ -1,4 +1,5 @@
 
+#include <stdbool.h>
 #include "mock_espconn_functions.h"
 #include "mock_espconn_regist_cb.h"
 #include "mock_owner_cb_functions.h"

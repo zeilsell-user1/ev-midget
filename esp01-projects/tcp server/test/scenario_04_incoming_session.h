@@ -40,20 +40,19 @@ SCENARIO("TCP Server can be started and all other callbacks can be registered wh
         WHEN("when the connected callback is called successfully")
         {
             setupTest();
-
             connectCb_(&mockedEspconn);
 
-            REQUIRE_EQ(espconnRegistConnectCbCalled, true);
-            REQUIRE_EQ(espconnRegistDisconnectCbCalled, true);
+            REQUIRE_EQ(espconnRegistConnectCbCalled, false);
             REQUIRE_EQ(espconnRegistRecvCbCalled, true);
             REQUIRE_EQ(espconnRegistSentCbCalled, true);
+            REQUIRE_EQ(espconnRegistDisconnectCbCalled, true);
             REQUIRE_EQ(espconnRegistReconnectCbCalled, true);
 
             REQUIRE_EQ(connectedCbCalled, true);
+            REQUIRE_EQ(receivedCbCalled, false);
+            REQUIRE_EQ(sentCbCalled, false);
             REQUIRE_EQ(disconnectedCbCalled, false);
             REQUIRE_EQ(reconnectCbCalled, false);
-            REQUIRE_EQ(sentCbCalled, false);
-            REQUIRE_EQ(receivedCbCalled, false);
 
             REQUIRE_EQ(espconnAcceptCalled, false);
             REQUIRE_EQ(espconnConnectCalled, false);
@@ -61,53 +60,109 @@ SCENARIO("TCP Server can be started and all other callbacks can be registered wh
             REQUIRE_EQ(espconnDisconnectCalled, false);
             REQUIRE_EQ(espconnAbortTestCalled, false);
         }
-        WHEN("when the connected callback is called successfully but sent CB reg fails")
-        {
-            espconnRegistSentCbTestIndex = 1;
-            espconnRegistRecvCbTestIndex = 0;
-            espconnRegistReconnectCbTestIndex = 0;
-            espconnRegistDisconnectCbTestIndex = 0;
-            espconnAbortTestIndex = 0;
-
-            connectCb_(&mockedEspconn);
-
-            REQUIRE_EQ(connectedCbCalled, true);
-        }
         WHEN("when the connected callback is called successfully but received CB reg fails")
         {
-            espconnRegistSentCbTestIndex = 0;
+            setupTest();
             espconnRegistRecvCbTestIndex = 1;
-            espconnRegistReconnectCbTestIndex = 0;
-            espconnRegistDisconnectCbTestIndex = 0;
             espconnAbortTestIndex = 0;
 
             connectCb_(&mockedEspconn);
 
+            REQUIRE_EQ(espconnRegistConnectCbCalled, false);
+            REQUIRE_EQ(espconnRegistRecvCbCalled, true);
+            REQUIRE_EQ(espconnRegistSentCbCalled, false);
+            REQUIRE_EQ(espconnRegistDisconnectCbCalled, false);
+            REQUIRE_EQ(espconnRegistReconnectCbCalled, false);
+
             REQUIRE_EQ(connectedCbCalled, true);
+            REQUIRE_EQ(receivedCbCalled, false);
+            REQUIRE_EQ(sentCbCalled, false);
+            REQUIRE_EQ(disconnectedCbCalled, false);
+            REQUIRE_EQ(reconnectCbCalled, false);
+
+            REQUIRE_EQ(espconnAcceptCalled, false);
+            REQUIRE_EQ(espconnConnectCalled, false);
+            REQUIRE_EQ(espconnSendCalled, false);
+            REQUIRE_EQ(espconnDisconnectCalled, false);
+            REQUIRE_EQ(espconnAbortTestCalled, true);
         }
-        WHEN("when the connected callback is called successfully but reconnected CB reg fails")
+        WHEN("when the connected callback is called successfully but sent CB reg fails")
         {
-            espconnRegistSentCbTestIndex = 0;
-            espconnRegistRecvCbTestIndex = 0;
-            espconnRegistReconnectCbTestIndex = 1;
-            espconnRegistDisconnectCbTestIndex = 0;
+            setupTest();
+            espconnRegistSentCbTestIndex = 1;
             espconnAbortTestIndex = 0;
 
             connectCb_(&mockedEspconn);
 
+            REQUIRE_EQ(espconnRegistConnectCbCalled, false);
+            REQUIRE_EQ(espconnRegistRecvCbCalled, true);
+            REQUIRE_EQ(espconnRegistSentCbCalled, true);
+            REQUIRE_EQ(espconnRegistDisconnectCbCalled, false);
+            REQUIRE_EQ(espconnRegistReconnectCbCalled, false);
+
             REQUIRE_EQ(connectedCbCalled, true);
+            REQUIRE_EQ(receivedCbCalled, false);
+            REQUIRE_EQ(sentCbCalled, false);
+            REQUIRE_EQ(disconnectedCbCalled, false);
+            REQUIRE_EQ(reconnectCbCalled, false);
+
+            REQUIRE_EQ(espconnAcceptCalled, false);
+            REQUIRE_EQ(espconnConnectCalled, false);
+            REQUIRE_EQ(espconnSendCalled, false);
+            REQUIRE_EQ(espconnDisconnectCalled, false);
+            REQUIRE_EQ(espconnAbortTestCalled, true);
         }
         WHEN("when the connected callback is called successfully but disconnected CB reg fails")
         {
-            espconnRegistSentCbTestIndex = 0;
-            espconnRegistRecvCbTestIndex = 0;
-            espconnRegistReconnectCbTestIndex = 0;
+            setupTest();
             espconnRegistDisconnectCbTestIndex = 1;
             espconnAbortTestIndex = 0;
 
             connectCb_(&mockedEspconn);
 
+            REQUIRE_EQ(espconnRegistConnectCbCalled, false);
+            REQUIRE_EQ(espconnRegistRecvCbCalled, true);
+            REQUIRE_EQ(espconnRegistSentCbCalled, true);
+            REQUIRE_EQ(espconnRegistDisconnectCbCalled, true);
+            REQUIRE_EQ(espconnRegistReconnectCbCalled, false);
+
             REQUIRE_EQ(connectedCbCalled, true);
+            REQUIRE_EQ(receivedCbCalled, false);
+            REQUIRE_EQ(sentCbCalled, false);
+            REQUIRE_EQ(disconnectedCbCalled, false);
+            REQUIRE_EQ(reconnectCbCalled, false);
+
+            REQUIRE_EQ(espconnAcceptCalled, false);
+            REQUIRE_EQ(espconnConnectCalled, false);
+            REQUIRE_EQ(espconnSendCalled, false);
+            REQUIRE_EQ(espconnDisconnectCalled, false);
+            REQUIRE_EQ(espconnAbortTestCalled, true);
+        }
+        WHEN("when the connected callback is called successfully but reconnected CB reg fails")
+        {
+            setupTest();
+            espconnRegistReconnectCbTestIndex = 1;
+            espconnAbortTestIndex = 0;
+
+            connectCb_(&mockedEspconn);
+
+            REQUIRE_EQ(espconnRegistConnectCbCalled, false);
+            REQUIRE_EQ(espconnRegistRecvCbCalled, true);
+            REQUIRE_EQ(espconnRegistSentCbCalled, true);
+            REQUIRE_EQ(espconnRegistDisconnectCbCalled, true);
+            REQUIRE_EQ(espconnRegistReconnectCbCalled, true);
+
+            REQUIRE_EQ(connectedCbCalled, true);
+            REQUIRE_EQ(receivedCbCalled, false);
+            REQUIRE_EQ(sentCbCalled, false);
+            REQUIRE_EQ(disconnectedCbCalled, false);
+            REQUIRE_EQ(reconnectCbCalled, false);
+
+            REQUIRE_EQ(espconnAcceptCalled, false);
+            REQUIRE_EQ(espconnConnectCalled, false);
+            REQUIRE_EQ(espconnSendCalled, false);
+            REQUIRE_EQ(espconnDisconnectCalled, false);
+            REQUIRE_EQ(espconnAbortTestCalled, true);
         }
     }
 }

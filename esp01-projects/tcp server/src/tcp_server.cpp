@@ -71,18 +71,14 @@ void sessionDeadCb(void *obj, TcpSession::TcpSessionPtr session)
  *******************************************************************************/
 
 TcpServer::TcpServer()
+    : started_(false),
+      config_{} // Use the default constructor for ServerConfig
 {
-    ip4_addr_set_zero(&ipAddress_);
-    port_ = 0;
-    started_ = false;
-    serverConnectedCb_ = nullCallback;
-    clientConnectedCb_ = nullCallback;
-    ownerObj_ = nullptr; // no owner object
 }
 
 TcpServer::~TcpServer()
 {
-    std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr>().swap(tcpSessions_);
+    tcpSessions_.clear(); // Clear the map
 }
 
 /*******************************************************************************
@@ -102,16 +98,19 @@ TcpServer &TcpServer::getInstance()
 
 void TcpServer::cleanup()
 {
-    ip4_addr_set_zero(&ipAddress_);
-    port_ = 0;
     started_ = false;
-    serverConnectedCb_ = nullCallback;
-    clientConnectedCb_ = nullCallback;
-    ownerObj_ = nullptr; // no owner object
     tcpSessions_.clear();
+
+    if (std::holds_alternative<ClientConfig>(config_))
+    {
+        auto &clientConfig = std::get<ClientConfig>(config_);
+        clientConfig.cleanClientList();
+    }
 }
 
-bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *ownerObj)
+bool TcpServer::startTcpServer(unsigned short port,
+                               void (*cb)(void *, TcpSession::TcpSessionPtr),
+                               void *ownerObj)
 {
     if (started_ == true)
     {
@@ -119,11 +118,7 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
         return false;
     }
 
-    ip4_addr_set_zero(&ipAddress_); // server mode has the IP address as zero
-
-    port_ = port;
-    serverConnectedCb_ = (void (*)(void *, TcpSession::TcpSessionPtr))cb;
-    ownerObj_ = ownerObj; // this is the object that owns the callback
+    config_ = ServerConfig{port, ownerObj, cb};
 
     // Set up server configuration
     serverConn_.type = ESPCONN_TCP;
@@ -165,12 +160,32 @@ bool TcpServer::startTcpServer(unsigned short port, void (*cb)(void *, TcpSessio
     }
 }
 
-bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *ownerObj)
+bool TcpServer::startTcpClient(ip_addr_t ipAddress,
+                               unsigned short port,
+                               void (*cb)(void *,
+                                          TcpSession::TcpSessionPtr),
+                               void *ownerObj)
 {
-    ipAddress_ = ipAddress;
-    port_ = port;
-    serverConnectedCb_ = (void (*)(void *, std::shared_ptr<TcpSession>))cb;
-    ownerObj_ = ownerObj; // this is the object that owns the callback
+
+    if ((started_ == true) && (std::holds_alternative<ServerConfig>(config_)))
+    {
+        TCP_WARNING("Trying to start the client while a server is active");
+        return false;
+    }
+    else if (std::holds_alternative<ClientConfig>(config_))
+    {
+        auto &clientConfig = std::get<ClientConfig>(config_);
+
+        if (!clientConfig.addClient(ipAddress, port, ownerObj, cb))
+        {
+            TCP_WARNING("Adding client failed");
+            return false;
+        }
+    }
+    else
+    {
+        config_ = ClientConfig{ipAddress, port, ownerObj, cb};
+    }
 
     // Set the server's port
     serverConn_.type = ESPCONN_TCP;
@@ -187,7 +202,7 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
         cleanup();
         return false;
     }
-    
+
     // TODO espconn_regist_reconcb(&serverConn, espconnClientSessionReconnectedCb);
 
     signed char rc = espconn_connect(&serverConn_);
@@ -195,6 +210,7 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
     switch (rc)
     {
     case 0:
+        started_ = true;
         TCP_INFO("espconn_connect returned success");
         return true;
     case ESPCONN_RTE:
@@ -218,6 +234,36 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*
         cleanup();
         return false;
     }
+}
+bool TcpServer::stopTcpServer()
+{
+    // TODO
+    return true;
+}
+
+bool TcpServer::stopTcpClient(ip_addr_t ipAddress)
+{
+    if ((started_ == true) && (std::holds_alternative<ServerConfig>(config_)))
+    {
+        TCP_WARNING("Trying to stop the client while a server is active");
+        return false;
+    }
+    else if (std::holds_alternative<ClientConfig>(config_))
+    {
+        auto &clientConfig = std::get<ClientConfig>(config_);
+
+        if (clientConfig.removeClient(ipAddress))
+        {
+            return true;
+        }
+    }
+    else
+    {
+        TCP_WARNING("Trying to stop the client that doesn't exist");
+        return false;
+    }
+
+    return false;
 }
 
 /*******************************************************************************
@@ -265,7 +311,26 @@ TcpSession::TcpSessionPtr TcpServer::createTcpSession(ip_addr_t ipAddress, unsig
         }
         else // call the owner and let them know a session is active
         {
-            serverConnectedCb_(ownerObj_, tcpSessionPtr);
+            if (std::holds_alternative<ServerConfig>(config_))
+            {
+                auto &serverConfig = std::get<ServerConfig>(config_);
+                serverConfig.connectedCb_(serverConfig.ownerObj_, tcpSessionPtr);
+            }
+            else // client
+            {
+                auto &clientConfig = std::get<ClientConfig>(config_);
+
+                auto it = clientConfig.clients_.find(ipAddress.addr);
+                if (it != clientConfig.clients_.end())
+                {
+                    TCP_WARNING("Client not found.");
+                }
+                else // Found the client
+                {
+                    const Data& clientData = it->second;
+                    clientData.connectedCb(clientData.ownerObj, tcpSessionPtr);
+                }
+            }
         }
         return tcpSessionPtr;
     }

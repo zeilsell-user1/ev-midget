@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#include "ip4_addr.h"
 
 typedef void *espconn_handle;
 typedef void (* espconn_connect_callback)(void *arg);

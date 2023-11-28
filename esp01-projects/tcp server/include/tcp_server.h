@@ -27,6 +27,7 @@
 #include <map>
 #include <cstdint>
 #include <memory>
+#include <variant>
 
 #ifdef ESP8266
 #include <lwip/ip.h>
@@ -55,11 +56,13 @@
 class TcpServer
 {
 public:
-    static TcpServer& getInstance();
+    static TcpServer &getInstance();
     void cleanup();
 
     bool startTcpServer(unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *obj);
     bool startTcpClient(ip_addr_t ipAddress, unsigned short port, void (*cb)(void *, TcpSession::TcpSessionPtr), void *obj);
+    bool stopTcpServer();
+    bool stopTcpClient(ip_addr_t ipAddress);
     void sessionConnected(void *arg);
     std::size_t getSessionCount();
     std::shared_ptr<TcpSession> getSession(TcpSession::SessionId sessionId);
@@ -72,9 +75,12 @@ public:
 
     TcpServer();
     ~TcpServer();
+
 private:
     TcpServer(const TcpServer &) = delete;
     TcpServer &operator=(const TcpServer &) = delete;
+    TcpServer(TcpServer &&) = delete;
+    TcpServer &operator=(TcpServer &&) = delete;
 
     TcpSession::TcpSessionPtr createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn);
     bool addSession(TcpSession::SessionId sessionId, const TcpSession::TcpSessionPtr &TcpSession);
@@ -82,17 +88,117 @@ private:
     TcpSession::TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
 
 private:
-    static std::unique_ptr<TcpServer> instance_;
-    std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr> tcpSessions_;
-    bool started_;
-    espconn serverConn_;  // used to define the local server regardless of client or server sessions
-    esp_tcp tcpConfig_;   // used to define the local server regardless of client or server sessions
-    ip_addr_t ipAddress_; // the remote address used to set up a client session
-    unsigned short port_; // the remote or local port
-    void *ownerObj_;      // the upper layer object that owns the callbacks
+    struct ServerConfig
+    {
+        unsigned short port_;
+        void *ownerObj_; // the upper layer object that owns the callbacks
+        void (*connectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
 
-    void (*serverConnectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
-    void (*clientConnectedCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
+        // Default constructor for ServerConfig
+        ServerConfig() : port_(0) {}
+        ServerConfig(unsigned short port,
+                     void *ownerObj,
+                     void (*connectedCb)(void *obj, TcpSession::TcpSessionPtr tcpSession))
+        {
+            port_ = port;
+            ownerObj_ = ownerObj;
+            connectedCb_ = connectedCb;
+        }
+    };
+
+    // Define client config structure
+
+    struct Data
+    {
+        ip_addr_t ipAddress;
+        unsigned short port;
+        void *ownerObj; // the upper layer object that owns the callbacks
+        void (*connectedCb)(void *obj, TcpSession::TcpSessionPtr tcpSession);
+    };
+    struct ClientConfig
+    {
+        unsigned char numberOfClients_;
+        std::map<unsigned long, Data> clients_;
+
+        ClientConfig() : numberOfClients_(0) {}
+        ClientConfig(ip_addr_t ipAddr,
+                     unsigned short port,
+                     void *ownerObj,
+                     void (*connectedCb)(void *obj, TcpSession::TcpSessionPtr tcpSession)) : numberOfClients_(1)
+        {
+            Data data;
+            data.ipAddress = ipAddr;
+            data.port = port;
+            data.ownerObj = ownerObj;
+            data.connectedCb = connectedCb;
+            clients_[ipAddr.addr] = data;
+        }
+
+        bool addClient(const ip_addr_t &ipAddr,
+                       const unsigned short &port,
+                       void *ownerObj,
+                       void (*connectedCb)(void *obj, TcpSession::TcpSessionPtr tcpSession))
+        {
+            if (numberOfClients_ < MAX_TCP_CLIENTS)
+            {
+                // Check if the client is not already in the map
+                if (clients_.find(ipAddr.addr) == clients_.end())
+                {
+                    Data data;
+                    data.ipAddress = ipAddr;
+                    data.port = port;
+                    data.ownerObj = ownerObj;
+                    data.connectedCb = connectedCb;
+                    clients_[ipAddr.addr] = data;
+                    numberOfClients_++;
+                    return true; // Successfully added
+                }
+                else
+                {
+                    TCP_ERROR("Client already exists.");
+                    return false; // Client already exists
+                }
+            }
+            else
+            {
+                TCP_ERROR("Maximum number of clients reached.");
+                return false; // Maximum clients reached
+            }
+        }
+
+        bool removeClient(const ip_addr_t &ipAddr)
+        {
+            auto it = clients_.find(ipAddr.addr);
+            if (it != clients_.end())
+            {
+                clients_.erase(it);
+                --numberOfClients_;
+                return true; // Successfully removed
+            }
+            else
+            {
+                TCP_WARNING("Client not found.");
+                return false; // Client not found
+            }
+        }
+
+        void cleanClientList()
+        {
+            clients_.clear();
+            numberOfClients_ = 0;
+        }
+    };
+
+    // Define the tagged union for server and client configs using std::variant
+    using ConfigUnion = std::variant<ServerConfig, ClientConfig>;
+
+private:
+    bool started_;
+    static std::unique_ptr<TcpServer> instance_;
+    ConfigUnion config_; // configuration for either the server or client
+    espconn serverConn_; // defines the local server regardless of client or server sessions
+    esp_tcp tcpConfig_;  // defines the local server regardless of client or server sessions
+    std::map<TcpSession::SessionId, TcpSession::TcpSessionPtr> tcpSessions_;
     void (*sessionDeadCb_)(void *obj, TcpSession::TcpSessionPtr tcpSession_);
 };
 
