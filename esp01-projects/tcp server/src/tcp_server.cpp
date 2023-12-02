@@ -48,13 +48,7 @@ void nullCallback(void *obj, std::shared_ptr<TcpSession> tcpSession)
  * session so they both call the same handle for sessionConnected
  *******************************************************************************/
 
-void espconnServerSessionConnectedCb(void *arg)
-{
-    TcpServer &tcpServer = TcpServer::getInstance();
-    tcpServer.sessionConnected(arg);
-}
-
-void espconnClientSessionConnectedCb(void *arg)
+void espconnSessionConnectedCb(void *arg)
 {
     TcpServer &tcpServer = TcpServer::getInstance();
     tcpServer.sessionConnected(arg);
@@ -99,7 +93,7 @@ TcpServer &TcpServer::getInstance()
 void TcpServer::cleanup()
 {
     started_ = false;
-    tcpSessions_.clear();
+    removeAllSessions();
 
     if (std::holds_alternative<ClientConfig>(config_))
     {
@@ -126,7 +120,7 @@ bool TcpServer::startTcpServer(unsigned short port,
     serverConn_.proto.tcp = &tcpConfig_;
     serverConn_.proto.tcp->local_port = port;
 
-    if (espconn_regist_connectcb(&serverConn_, espconnServerSessionConnectedCb) != 0)
+    if (espconn_regist_connectcb(&serverConn_, espconnSessionConnectedCb) != 0)
     {
         cleanup();
         return false;
@@ -197,7 +191,7 @@ bool TcpServer::startTcpClient(ip_addr_t ipAddress,
     serverConn_.proto.tcp->remote_ip[3] = ip4_addr4(&ipAddress);
     serverConn_.proto.tcp->remote_port = port;
 
-    if (espconn_regist_connectcb(&serverConn_, espconnServerSessionConnectedCb) != 0)
+    if (espconn_regist_connectcb(&serverConn_, espconnSessionConnectedCb) != 0)
     {
         cleanup();
         return false;
@@ -278,6 +272,7 @@ bool TcpServer::stopTcpClient(ip_addr_t ipAddress)
 
 void TcpServer::sessionConnected(void *arg)
 {
+    TCP_INFO("sessionConnected called");
     struct espconn *conn = (struct espconn *)arg;
 
     if ((conn->type == ESPCONN_TCP) && (conn->state == ESPCONN_CONNECT))
@@ -394,6 +389,14 @@ TcpSession::TcpSessionPtr TcpServer::getSession(TcpSession::SessionId sessionId)
     {
         return nullptr;
     }
+}
+
+void TcpServer::removeAllSessions()
+{
+    // Clear the map, releasing all shared_ptr and deallocating memory
+    tcpSessions_.clear();
+    
+    TCP_INFO("All sessions deleted");
 }
 
 // espconn_regist_recvcb(&serverConn, serverRecvCb);

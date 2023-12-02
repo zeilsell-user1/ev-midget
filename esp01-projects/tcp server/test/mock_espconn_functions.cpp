@@ -1,5 +1,6 @@
 
 #include <doctest.h>
+#include <string.h>
 
 #include "ip_addr.h"
 #include "ip4_addr.h"
@@ -7,6 +8,8 @@
 #include "espconn.h"
 
 #include "mock_espconn_functions.h"
+#include "mock_espconn_regist_cb.h"
+#include "mock_owner_cb_functions.h"
 
 int espconnAcceptTestIndex = 0;
 int espconnConnectTestIndex = 0;
@@ -155,6 +158,23 @@ signed char espconn_send(struct espconn *espconn, unsigned char *psent, unsigned
     if (espconnSendTestIndex == 0)
     {
         INFO("successful send");
+        ip_addr_t ipAddressPassed;
+        IP4_ADDR(&ipAddressPassed, espconn->proto.tcp->remote_ip[0],
+                 espconn->proto.tcp->remote_ip[1],
+                 espconn->proto.tcp->remote_ip[2],
+                 espconn->proto.tcp->remote_ip[3]);
+        ip_addr_t ipAddressTest;
+        IP4_ADDR(&ipAddressTest, IP_1, IP_2, IP_3, IP_4 + ipOffset);
+        REQUIRE_EQ(ipAddressPassed.addr, ipAddressTest.addr);
+        REQUIRE_EQ(espconn->proto.tcp->remote_port, TEST_PORT_1);
+        REQUIRE_EQ(strcmp((const char *)psent, "This is a test message"), 0);
+        REQUIRE_EQ(length, strlen("This is a test message"));
+
+        if (sentCb_ != nullptr)
+        {
+            sentCb_((void *)espconn);
+        }
+
         return 0;
     }
     else if (espconnSendTestIndex == 1)

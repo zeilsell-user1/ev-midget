@@ -5,10 +5,11 @@
 
 #include <doctest.h>
 
-#include "scenario_01_instantiation.h"
-#include "scenario_02_start_tcp_server.h"
-#include "scenario_03_start_tcp_client.h"
-#include "scenario_04_incoming_session.h"
+//#include "scenario_01_instantiation.h"
+//#include "scenario_02_start_tcp_server.h"
+//#include "scenario_03_start_tcp_client.h"
+//#include "scenario_04_session_established.h"
+#include "scenario_05_send_message.h"
 
 // Test cases implemented in this collection:
 //

@@ -85,6 +85,7 @@ private:
     TcpSession::TcpSessionPtr createTcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn);
     bool addSession(TcpSession::SessionId sessionId, const TcpSession::TcpSessionPtr &TcpSession);
     void removeSession(TcpSession::SessionId sessionId);
+    void removeAllSessions();
     TcpSession::TcpSessionPtr getSession(TcpSession::SessionId sessionId) const;
 
 private:

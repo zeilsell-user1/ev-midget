@@ -32,11 +32,15 @@
 
 void nullCallback1(void *obj, TcpSession::TcpSessionPtr session)
 {
-    TCP_ERROR("callback called without initialisation");
+    TCP_ERROR("callback1 called without initialisation");
 }
 void nullcallback2(void *obj, char *pdata, unsigned short len, TcpSession::TcpSessionPtr session)
 {
-    TCP_ERROR("callback called without initialisation");
+    TCP_ERROR("callback2 called without initialisation");
+}
+void nullcallback3(void *obj, signed char err, TcpSession::TcpSessionPtr session)
+{
+    TCP_ERROR("callback3 called without initialisation");
 }
 
 /*
@@ -104,6 +108,7 @@ TcpSession::TcpSession(ip_addr_t ipAddress, unsigned short port, espconn *conn)
       messageSentCbListener_(nullptr),
       sessionDeadCbListener_(nullptr),
       disconnectedCb_(nullCallback1),
+      reconnectCb_(nullcallback3),
       incomingMessageCb_(nullcallback2),
       messageSentCb_(nullCallback1),
       deadCb_(nullCallback1)
@@ -138,7 +143,7 @@ void TcpSession::disconnectSession()
 
 TcpSession::sendResult TcpSession::sendMessage(unsigned char *pData, unsigned short len)
 {
-    signed char result;
+    signed char result = 0;
 
     if ((result = espconn_send(&serverConn_, pData, len)) == 0)
     {
@@ -221,10 +226,13 @@ bool TcpSession::registerIncomingMessageCb(void (*cb)(void *, char *pdata, unsig
 
 bool TcpSession::registerMessageSentCb(void (*cb)(void *, TcpSessionPtr session), void *obj)
 {
+    TCP_INFO("TcpSession::registerMessageSentCb called");
     if (espconn_regist_sentcb(&serverConn_, localMessageSentCb) == 0)
     {
+        TCP_INFO("Register the message sent callback");
         messageSentCbListener_ = obj;
         this->messageSentCb_ = cb;
+        TCP_INFO("messageSentCb_ = 0x%X", this->messageSentCb_);
         return true;
     }
     else
@@ -262,7 +270,10 @@ void TcpSession::sessionIncomingMessage(espconn *conn, char *pdata, unsigned sho
 
 void TcpSession::sessionMessageSent(espconn *conn)
 {
+    TCP_INFO("sessionMessageSent called");
+    TCP_INFO("messageSentCb_ = 0x%X", this->messageSentCb_);
     this->messageSentCb_(messageSentCbListener_, (TcpSessionPtr)this);
+    TCP_INFO("sentCb returned");
 }
 
 // stiatic utility methods

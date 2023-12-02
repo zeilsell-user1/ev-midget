@@ -1,5 +1,4 @@
 
-
 #include <doctest.h>
 
 #include "tcp_server.h"
@@ -12,6 +11,8 @@ bool disconnectedCbCalled = false;
 bool reconnectCbCalled = false;
 bool sentCbCalled = false;
 bool receivedCbCalled = false;
+
+TcpSession::TcpSessionPtr testSession = nullptr;
 
 DummyObject dummyObject;
 
@@ -27,6 +28,9 @@ void incomingMessageCb(void *ownerObj, char *pdata, unsigned short len, TcpSessi
 
 void sentCb(void *ownerObj, TcpSession::TcpSessionPtr session)
 {
+    TCP_INFO("sentCb called");
+    REQUIRE_EQ(ownerObj, (void *)&dummyObject);
+    REQUIRE_EQ(session, testSession);
     sentCbCalled = true;
 };
 
@@ -37,10 +41,12 @@ void reconnectCb(void *ownerObj, signed char err, TcpSession::TcpSessionPtr sess
 
 void connectedCb(void *ownerObj, TcpSession::TcpSessionPtr session)
 {
+    TCP_INFO("connectCb mock function called");
     REQUIRE_EQ(ownerObj, (void *)&dummyObject);
     TcpServer &tcpServer = TcpServer::getInstance();
     REQUIRE_EQ(session->isSessionValid(), true);
     REQUIRE_EQ(tcpServer.getSessionCount(), 1);
+    testSession = session;
 
     bool imrc = session->registerIncomingMessageCb(incomingMessageCb, (void *)&dummyObject);
     espconnRegistRecvCbTestIndex != 0 ? REQUIRE_EQ(imrc, false) : REQUIRE_EQ(imrc, true);

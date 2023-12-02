@@ -35,4 +35,6 @@ void setupTest()
     reconnectCbCalled = false;
     sentCbCalled = false;
     receivedCbCalled = false;
+
+    ipOffset = 0;
 }

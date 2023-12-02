@@ -18,16 +18,16 @@ SCENARIO("TCP Server being started")
 {
     GIVEN("that the TcpServer has been retrieved with a getInstance")
     {
+        TcpServer &tcpServer = TcpServer::getInstance();
         unsigned short port = TEST_PORT_1;
         ip_addr_t ipAddress;
         IP4_ADDR(&ipAddress, IP_1, IP_2, IP_3, IP_4);
+        espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
+        espconnRegistConnectCbCalled = false;
 
         WHEN("get a startTcpClient for the first time")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            tcpServer.cleanup();                 // ensure the server is clean from the start
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
+            tcpServer.cleanup(); // ensure the server is clean from the start
 
             THEN("the result of calling startTcpClient is true")
             {
@@ -37,10 +37,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpClient is called with same IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpClient with same IP address and port is false")
             {
                 REQUIRE_EQ(tcpServer.startTcpClient(ipAddress, port, connectedCb, &dummyObject), false);
@@ -49,10 +45,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpServer is called")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpServer once cleint is started")
             {
                 REQUIRE_EQ(tcpServer.startTcpServer(port, connectedCb, &dummyObject), false);
@@ -61,10 +53,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpClient is called with second IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpClient with second IP address and port is true")
             {
                 ipOffset = 1;
@@ -75,10 +63,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpClient is called with third IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpClient with second IP address and port is true")
             {
                 ipOffset = 2;
@@ -89,10 +73,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpClient is called with third IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpClient with third IP address and port is true")
             {
                 ipOffset = 3;
@@ -103,10 +83,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpClient is called with fourth IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpClient with fourth IP address and port is fail (max tcp clients = 3)")
             {
                 ipOffset = 4;
@@ -117,8 +93,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("stopTcpClient is called with third IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-
             THEN("the result of calling stopTcpClient with third IP address and port is true")
             {
                 ipOffset = 3;
@@ -128,8 +102,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("stopTcpClient is called with third IP address and port (already stopped)")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-
             THEN("the result of calling stopTcpClient with third IP address and port is false")
             {
                 ipOffset = 3;
@@ -139,10 +111,6 @@ SCENARIO("TCP Server being started")
         }
         WHEN("startTcpClient is called with fourth IP address and port")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
-            espconnRegistConnectCbTestIndex = 0; // successful registration of connect CB
-            espconnRegistConnectCbCalled = false;
-
             THEN("the result of calling startTcpClient with fourth IP address and port now works")
             {
                 ipOffset = 4;
@@ -153,15 +121,21 @@ SCENARIO("TCP Server being started")
         }
         WHEN("error in the registration of the callback")
         {
-            TcpServer &tcpServer = TcpServer::getInstance();
             tcpServer.cleanup();                 // ensure the server is clean from the start
             espconnRegistConnectCbTestIndex = 1; // unsuccessful registration of connect CB
-            espconnRegistConnectCbCalled = false;
 
             THEN("the result of calling startTcpClient is false")
             {
                 REQUIRE_EQ(tcpServer.startTcpClient(ipAddress, port, connectedCb, &dummyObject), false);
                 REQUIRE_EQ(espconnRegistConnectCbCalled, true);
+            }
+        }
+        WHEN("clean up test")
+        {
+            tcpServer.cleanup();                 // ensure the server is clean from the start
+            THEN("tcpServer should be empty again")
+            {
+                REQUIRE_EQ(tcpServer.getSessionCount(), 0);
             }
         }
     }

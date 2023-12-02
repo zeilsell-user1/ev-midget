@@ -131,11 +131,6 @@ public:
 
 private:
     TcpSession() = default;
-    void (*disconnectedCb_)(void *obj, TcpSessionPtr session);
-    void (*reconnectCb_)(void *obj, signed char err, TcpSessionPtr session);
-    void (*incomingMessageCb_)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
-    void (*messageSentCb_)(void *obj, TcpSessionPtr session);
-    void (*deadCb_)(void *obj, TcpSessionPtr session);
 
 private:
     bool sessionValid_;
@@ -144,6 +139,15 @@ private:
     SessionConfig sessionConfig_;
     espconn serverConn_;
 
+private:
+    // callbacks from the owner object 
+    void (*disconnectedCb_)(void *obj, TcpSessionPtr session);
+    void (*reconnectCb_)(void *obj, signed char err, TcpSessionPtr session);
+    void (*incomingMessageCb_)(void *obj, char *pdata, unsigned short len, TcpSessionPtr session);
+    void (*messageSentCb_)(void *obj, TcpSessionPtr session);
+    void (*deadCb_)(void *obj, TcpSessionPtr session);
+
+    // owner objects for each callback
     void * sessionDisconnectedCbListener_;
     void * sessionReconnectCbListener_;
     void * incomingMessageCbListener_;

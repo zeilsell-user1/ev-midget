@@ -9,6 +9,7 @@ extern bool disconnectedCbCalled;
 extern bool reconnectCbCalled;
 extern bool sentCbCalled;
 extern bool receivedCbCalled;
+extern TcpSession::TcpSessionPtr testSession;
 
 class DummyObject
 {

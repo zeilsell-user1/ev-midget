@@ -164,5 +164,13 @@ SCENARIO("TCP Server can be started and all other callbacks can be registered wh
             REQUIRE_EQ(espconnDisconnectCalled, false);
             REQUIRE_EQ(espconnAbortTestCalled, true);
         }
+        WHEN("clean up test")
+        {
+            tcpServer.cleanup();                 // ensure the server is clean from the start
+            THEN("tcpServer should be empty again")
+            {
+                REQUIRE_EQ(tcpServer.getSessionCount(), 0);
+            }
+        }
     }
 }
